@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", "Libre Baskerville", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  --color-paper: #FDFCFB;
+  --color-ink: #1A1A1A;
+  --color-accent: #D44D5C; /* Deep rose/red for a romantic/letter feel */
+  --color-muted: #8E8E8E;
+}
+
+@layer base {
+  body {
+    @apply bg-paper text-ink font-sans antialiased;
+  }
+  h1, h2, h3, h4 {
+    @apply font-serif;
+  }
+}
+
+@layer components {
+  .paper-card {
+    @apply bg-white shadow-[0_4px_20px_rgba(0,0,0,0.03)] rounded-2xl border border-black/5;
+  }
+  .btn-primary {
+    @apply bg-accent text-white px-8 py-3 rounded-full font-medium transition-all hover:opacity-90 active:scale-95 disabled:opacity-50 shadow-lg shadow-accent/20;
+  }
+  .btn-secondary {
+    @apply bg-white text-ink px-8 py-3 rounded-full font-medium border border-black/10 transition-all hover:bg-black/5 active:scale-95;
+  }
+  .input-field {
+    @apply w-full px-4 py-3 bg-white border border-black/5 rounded-xl focus:border-accent/40 focus:ring-4 focus:ring-accent/5 outline-none transition-all;
+  }
+  .glass {
+    @apply bg-white/80 backdrop-blur-md border border-white/20;
+  }
+}

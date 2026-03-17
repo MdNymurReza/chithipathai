@@ -1,0 +1,147 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Fields: fullName, username, email, phone, createdAt, blockedUsers
+    //
+    // Collection: profiles
+    // Fields: fullName, username, phone
+    //
+    // Collection: letters
+    // Fields: senderId, receiverId, title, content, theme, isAnonymous, noReply, password, scheduledAt, createdAt, stickers
+    //
+    // Collection: notifications
+    // Fields: userId, text, read, createdAt
+    //
+    // Collection: wall_posts
+    // Fields: authorId, authorName, title, content, theme, createdAt, likes
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        ((exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'user') == 'admin') ||
+          (request.auth.token.email == "campusbondhu.edtech@gmail.com"));
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function hasOnlyAllowedFields(data, allowedFields) {
+      return data.keys().hasOnly(allowedFields);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUser(data) {
+      return hasOnlyAllowedFields(data, ['fullName', 'username', 'email', 'phone', 'createdAt', 'blockedUsers', 'role']) &&
+             data.fullName is string && data.fullName.size() > 0 && data.fullName.size() < 100 &&
+             data.username is string && data.username.size() >= 3 && data.username.size() < 30 &&
+             data.email is string && isValidEmail(data.email) &&
+             data.phone is string && data.phone.size() >= 10 && data.phone.size() < 20;
+    }
+
+    function isValidProfile(data) {
+      return hasOnlyAllowedFields(data, ['fullName', 'username', 'phone', 'blockedUsers']) &&
+             data.fullName is string && data.username is string && data.phone is string &&
+             data.blockedUsers is list;
+    }
+
+    function isNotBlocked(receiverId) {
+      return !exists(/databases/$(database)/documents/profiles/$(receiverId)) || 
+             !(request.auth.uid in get(/databases/$(database)/documents/profiles/$(receiverId)).data.get('blockedUsers', []));
+    }
+
+    function isValidLetter(data) {
+      return hasOnlyAllowedFields(data, ['senderId', 'receiverId', 'title', 'content', 'theme', 'isAnonymous', 'noReply', 'password', 'scheduledAt', 'createdAt', 'stickers']) &&
+             data.senderId == request.auth.uid &&
+             data.receiverId is string &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.content is string && data.content.size() > 0 && data.content.size() < 10000 &&
+             data.theme in ['romantic', 'sad', 'funny', 'birthday', 'islamic'] &&
+             data.isAnonymous is bool &&
+             data.noReply is bool &&
+             (data.password == null || data.password is string) &&
+             (data.scheduledAt == null || data.scheduledAt is timestamp) &&
+             data.createdAt == request.time &&
+             data.stickers is list &&
+             isNotBlocked(data.receiverId);
+    }
+
+    function isValidWallPost(data) {
+      return hasOnlyAllowedFields(data, ['authorId', 'authorName', 'title', 'content', 'theme', 'createdAt', 'likes', 'likedBy']) &&
+             data.authorId == request.auth.uid &&
+             data.authorName is string &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.content is string && data.content.size() > 0 && data.content.size() < 10000 &&
+             data.theme in ['romantic', 'sad', 'funny', 'birthday', 'islamic'] &&
+             data.createdAt == request.time &&
+             data.likes is number &&
+             data.likedBy is list;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data) && (!('role' in request.resource.data) || request.resource.data.role == 'user');
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) && (request.resource.data.role == resource.data.role || isAdmin());
+    }
+
+    match /profiles/{userId} {
+      allow read: if true; // Allow public search and duplicate checks
+      allow write: if isOwner(userId) && isValidProfile(request.resource.data);
+    }
+
+    match /letters/{letterId} {
+      allow read: if isAuthenticated() && (
+        request.auth.uid == resource.data.senderId || 
+        request.auth.uid == resource.data.receiverId || 
+        isAdmin()
+      );
+      allow create: if isAuthenticated() && isValidLetter(request.resource.data);
+      allow update: if false; // Letters are immutable
+      allow delete: if isAuthenticated() && (request.auth.uid == resource.data.senderId || isAdmin());
+    }
+
+    match /wall_posts/{postId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidWallPost(request.resource.data);
+      allow update: if isAuthenticated() && (
+        (isOwner(resource.data.authorId) && isValidWallPost(request.resource.data)) ||
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'likedBy']))
+      );
+      allow delete: if isAuthenticated() && (isOwner(resource.data.authorId) || isAdmin());
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && (request.auth.uid == resource.data.userId || isAdmin());
+      allow create: if isAuthenticated(); // Anyone can send a notification (triggered by sending a letter)
+      allow update: if isAuthenticated() && request.auth.uid == resource.data.userId && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      allow delete: if isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+  }
+}

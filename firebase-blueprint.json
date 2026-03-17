@@ -1,0 +1,95 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "fullName": { "type": "string", "description": "Full name of the user" },
+        "username": { "type": "string", "description": "Unique username" },
+        "email": { "type": "string", "format": "email", "description": "User email" },
+        "phone": { "type": "string", "description": "Unique phone number" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Account creation time" },
+        "blockedUsers": { "type": "array", "items": { "type": "string" }, "description": "List of blocked user IDs" }
+      },
+      "required": ["fullName", "username", "email", "phone", "createdAt"]
+    },
+    "Letter": {
+      "title": "Letter",
+      "description": "A digital letter sent between users",
+      "type": "object",
+      "properties": {
+        "senderId": { "type": "string", "description": "ID of the sender" },
+        "receiverId": { "type": "string", "description": "ID of the receiver" },
+        "title": { "type": "string", "description": "Title of the letter" },
+        "content": { "type": "string", "description": "Content of the letter" },
+        "summary": { "type": "string", "description": "AI generated summary of the letter" },
+        "theme": { "type": "string", "enum": ["romantic", "sad", "funny", "birthday", "islamic"], "description": "Theme of the letter" },
+        "isAnonymous": { "type": "boolean", "description": "Whether the sender is anonymous" },
+        "noReply": { "type": "boolean", "description": "Whether a reply is needed" },
+        "password": { "type": "string", "description": "Optional password protection" },
+        "scheduledAt": { "type": "string", "format": "date-time", "description": "Future delivery time" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation time" },
+        "stickers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string", "enum": ["emoji", "stamp", "memo"] },
+              "value": { "type": "string" },
+              "text": { "type": "string" },
+              "x": { "type": "number" },
+              "y": { "type": "number" }
+            }
+          }
+        }
+      },
+      "required": ["senderId", "receiverId", "title", "content", "theme", "createdAt"]
+    },
+    "WallPost": {
+      "title": "WallPost",
+      "description": "A public letter posted on the wall",
+      "type": "object",
+      "properties": {
+        "authorId": { "type": "string", "description": "ID of the author" },
+        "authorName": { "type": "string", "description": "Display name of the author" },
+        "title": { "type": "string", "description": "Title of the post" },
+        "content": { "type": "string", "description": "Content of the post" },
+        "theme": { "type": "string", "enum": ["romantic", "sad", "funny", "birthday", "islamic"], "description": "Theme of the post" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation time" },
+        "likes": { "type": "number", "description": "Number of likes" }
+      },
+      "required": ["authorId", "authorName", "title", "content", "theme", "createdAt"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "User notification",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "ID of the user to notify" },
+        "text": { "type": "string", "description": "Notification message" },
+        "read": { "type": "boolean", "description": "Whether the notification has been read" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation time" }
+      },
+      "required": ["userId", "text", "read", "createdAt"]
+    },
+    "Profile": {
+      "title": "Profile",
+      "description": "Public user profile for search",
+      "type": "object",
+      "properties": {
+        "fullName": { "type": "string" },
+        "username": { "type": "string" },
+        "phone": { "type": "string" }
+      },
+      "required": ["fullName", "username", "phone"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": { "schema": "User", "description": "User profiles (private)" },
+    "/profiles/{userId}": { "schema": "Profile", "description": "Public profiles for search" },
+    "/letters/{letterId}": { "schema": "Letter", "description": "Digital letters" },
+    "/wall_posts/{postId}": { "schema": "WallPost", "description": "Public wall posts" },
+    "/notifications/{notificationId}": { "schema": "Notification", "description": "User notifications" }
+  }
+}
