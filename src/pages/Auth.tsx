@@ -186,7 +186,7 @@ export default function Auth() {
                 </div>
               </div>
             )}
-
+{/* 
             {isLogin && (
               <button
                 type="button"
@@ -210,7 +210,7 @@ export default function Auth() {
               >
                 টেস্ট লগইন (Test Login)
               </button>
-            )}
+            )} */}
           </motion.form>
         </AnimatePresence>
 
