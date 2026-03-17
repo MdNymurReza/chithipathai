@@ -54,11 +54,10 @@ export default function Navbar() {
         <div className="flex justify-between h-16 items-center">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center text-white font-serif font-bold text-xl">
-              C
-            </div>
+            {/* <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center text-white font-serif font-bold text-xl">
+            </div> */}
             <span className="font-serif font-bold text-xl tracking-tight hidden sm:block">
-              ChithiPathao
+              ChithiPathai
             </span>
           </Link>
 
