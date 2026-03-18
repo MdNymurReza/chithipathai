@@ -36,4 +36,7 @@
   .glass {
     @apply bg-white/80 backdrop-blur-md border border-white/20;
   }
+  .paper-texture {
+    background-image: url("https://www.transparenttextures.com/patterns/paper-fibers.png");
+  }
 }

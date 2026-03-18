@@ -2,55 +2,64 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../App';
 import { motion } from 'motion/react';
-import { Mail, Send, Shield, Clock, Heart, Sparkles, ArrowRight, UserPlus, Globe, MessageSquare, User } from 'lucide-react';
+import { Mail, Send, Shield, Clock, Heart, Sparkles, ArrowRight, UserPlus, Globe, MessageSquare, User, Share2 } from 'lucide-react';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 
 const THEMES: Record<string, any> = {
   romantic: { 
-    bg: 'bg-pink-50', 
-    pattern: 'radial-gradient(circle at 10px 10px, #fce7f3 2px, transparent 0)',
-    border: 'border-pink-200', 
-    accent: 'bg-pink-100',
-    text: 'text-pink-900', 
+    bg: 'bg-rose-50', 
+    pattern: 'linear-gradient(135deg, #fff5f5 0%, #fee2e2 100%), radial-gradient(circle at 10px 10px, #fecaca 1.5px, transparent 0)',
+    border: 'border-rose-200', 
+    accent: 'bg-rose-100',
+    text: 'text-rose-900', 
     font: 'font-serif', 
-    icon: '💝' 
+    icon: '🌹' 
   },
   sad: { 
-    bg: 'bg-blue-50', 
-    pattern: 'linear-gradient(135deg, #dbeafe 25%, transparent 25%)',
-    border: 'border-blue-200', 
-    accent: 'bg-blue-100',
-    text: 'text-blue-900', 
+    bg: 'bg-slate-50', 
+    pattern: 'linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%), repeating-linear-gradient(45deg, rgba(148,163,184,0.05) 0px, rgba(148,163,184,0.05) 1px, transparent 1px, transparent 10px)',
+    border: 'border-slate-200', 
+    accent: 'bg-slate-100',
+    text: 'text-slate-900', 
     font: 'font-serif', 
-    icon: '💧' 
+    icon: '🌧️' 
   },
   funny: { 
-    bg: 'bg-yellow-50', 
-    pattern: 'radial-gradient(#fef08a 1px, transparent 0)',
-    border: 'border-yellow-200', 
-    accent: 'bg-yellow-100',
-    text: 'text-yellow-900', 
+    bg: 'bg-amber-50', 
+    pattern: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%), radial-gradient(circle at 15px 15px, #fcd34d 1.5px, transparent 0)',
+    border: 'border-amber-200', 
+    accent: 'bg-amber-100',
+    text: 'text-amber-900', 
     font: 'font-sans', 
-    icon: '😂' 
+    icon: '✨' 
   },
   birthday: { 
     bg: 'bg-purple-50', 
-    pattern: 'repeating-linear-gradient(45deg, #f3e8ff, #f3e8ff 10px, #ffffff 10px, #ffffff 20px)',
+    pattern: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%), radial-gradient(circle at 20px 20px, #e9d5ff 2px, transparent 0), radial-gradient(circle at 40px 40px, #d8b4fe 1.5px, transparent 0)',
     border: 'border-purple-200', 
     accent: 'bg-purple-100',
     text: 'text-purple-900', 
     font: 'font-sans', 
-    icon: '🎂' 
+    icon: '🎁' 
   },
   islamic: { 
     bg: 'bg-emerald-50', 
-    pattern: 'radial-gradient(circle at 0% 0%, #d1fae5 15%, transparent 15%)',
+    pattern: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%), radial-gradient(circle at center, #10b981 0.5px, transparent 0)',
     border: 'border-emerald-200', 
     accent: 'bg-emerald-100',
     text: 'text-emerald-900', 
     font: 'font-serif', 
-    icon: '🌙' 
+    icon: '🕌' 
+  },
+  professional: { 
+    bg: 'bg-slate-50', 
+    pattern: 'linear-gradient(to right, #f1f5f9 1px, transparent 1px), linear-gradient(to bottom, #f1f5f9 1px, transparent 1px)',
+    border: 'border-slate-300', 
+    accent: 'bg-slate-200',
+    text: 'text-slate-800', 
+    font: 'font-sans', 
+    icon: '🖋️' 
   },
 };
 
@@ -99,8 +108,33 @@ export default function Landing() {
     }
   ];
 
+  const steps = [
+    {
+      number: '০১',
+      title: 'চিঠি লিখুন',
+      desc: 'আপনার মনের কথাগুলো সুন্দর করে গুছিয়ে লিখুন।'
+    },
+    {
+      number: '০২',
+      title: 'থিম বেছে নিন',
+      desc: 'মুড অনুযায়ী রোমান্টিক বা ফানি থিম এবং স্টিকার যোগ করুন।'
+    },
+    {
+      number: '০৩',
+      title: 'পাঠিয়ে দিন',
+      desc: 'সরাসরি ইনবক্সে পাঠান অথবা পাবলিক ওয়ালে শেয়ার করুন।'
+    }
+  ];
+
   return (
-    <div className="min-h-screen bg-paper overflow-hidden">
+    <div className="min-h-screen bg-paper overflow-hidden relative">
+      {/* Background Decorations */}
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-0">
+        <div className="absolute top-[10%] left-[-5%] w-[30%] aspect-square bg-accent/5 rounded-full blur-3xl" />
+        <div className="absolute top-[60%] right-[-10%] w-[40%] aspect-square bg-pink-200/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-[-10%] left-[20%] w-[25%] aspect-square bg-emerald-200/10 rounded-full blur-3xl" />
+      </div>
+
       {/* Hero Section */}
       <section className="relative pt-20 pb-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
@@ -151,7 +185,7 @@ export default function Landing() {
                   <div className="w-16 h-20 bg-accent/10 border-2 border-accent/20 rounded-md flex items-center justify-center text-accent font-bold text-xs uppercase rotate-12">
                     Stamp
                   </div>
-                  <div className="text-right italic text-ink/40">March 17, 2026</div>
+                  <div className="text-right italic text-ink/40">March 18, 2026</div>
                 </div>
                 <h3 className="text-3xl font-serif mb-6">প্রিয় বন্ধু,</h3>
                 <p className="text-xl leading-relaxed text-ink/70 font-serif">
@@ -167,6 +201,30 @@ export default function Landing() {
             <div className="absolute -top-10 -right-10 w-40 h-40 bg-pink-200/20 blur-3xl rounded-full" />
             <div className="absolute -bottom-10 -left-10 w-60 h-60 bg-accent/10 blur-3xl rounded-full" />
           </motion.div>
+        </div>
+      </section>
+
+      {/* How it Works */}
+      <section className="py-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-black/5">
+        <div className="grid lg:grid-cols-3 gap-12">
+          {steps.map((step, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.2 }}
+              className="relative"
+            >
+              <div className="text-6xl font-serif font-bold text-accent/10 absolute -top-8 -left-4 select-none">
+                {step.number}
+              </div>
+              <div className="relative z-10">
+                <h3 className="text-2xl font-bold mb-4">{step.title}</h3>
+                <p className="text-ink/60 leading-relaxed">{step.desc}</p>
+              </div>
+            </motion.div>
+          ))}
         </div>
       </section>
 
@@ -226,6 +284,9 @@ export default function Landing() {
                   transition={{ delay: i * 0.1 }}
                   className={`paper-card p-6 shadow-md border-2 ${theme.border} ${theme.bg} hover:shadow-xl transition-shadow relative overflow-hidden`}
                 >
+                  {/* Paper Texture Overlay */}
+                  <div className="absolute inset-0 opacity-[0.03] pointer-events-none paper-texture z-30" />
+
                   {/* Theme Pattern */}
                   <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: theme.pattern, backgroundSize: post.theme === 'romantic' ? '20px 20px' : 'auto' }} />
 
@@ -243,8 +304,31 @@ export default function Landing() {
                     <p className="text-sm text-ink/60 line-clamp-3 mb-4 italic">
                       "{post.content}"
                     </p>
-                    <div className="text-[10px] text-ink/30 uppercase tracking-widest">
-                      {post.createdAt?.toDate().toLocaleDateString('bn-BD')}
+                    <div className="flex items-center justify-between">
+                      <div className="text-[10px] text-ink/30 uppercase tracking-widest">
+                        {post.createdAt?.toDate().toLocaleDateString('bn-BD')}
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          const url = `${window.location.origin}/view-post/${post.id}`;
+                          if (navigator.share) {
+                            navigator.share({
+                              title: post.title,
+                              text: `Check out this post on ChithiPathao: ${post.title}`,
+                              url: url,
+                            }).catch(err => console.error('Error sharing:', err));
+                          } else {
+                            navigator.clipboard.writeText(url).then(() => {
+                              alert('লিঙ্কটি কপি করা হয়েছে! (Link copied to clipboard!)');
+                            });
+                          }
+                        }}
+                        className="text-ink/20 hover:text-accent transition-colors"
+                        title="Share Post"
+                      >
+                        <Share2 size={14} />
+                      </button>
                     </div>
                   </Link>
                 </motion.div>
@@ -279,9 +363,9 @@ export default function Landing() {
       <footer className="py-12 px-4 border-t border-black/5 text-center text-ink/40 text-sm">
         <p>© 2026 ChithiPathao. All rights reserved.</p>
         <div className="flex justify-center gap-6 mt-4">
-          <a href="#" className="hover:text-accent transition-colors">Privacy Policy</a>
-          <a href="#" className="hover:text-accent transition-colors">Terms of Service</a>
-          <a href="#" className="hover:text-accent transition-colors">Contact</a>
+          <Link to="/privacy" className="hover:text-accent transition-colors">Privacy Policy</Link>
+          <Link to="/terms" className="hover:text-accent transition-colors">Terms of Service</Link>
+          <Link to="/contact" className="hover:text-accent transition-colors">Contact</Link>
         </div>
       </footer>
     </div>

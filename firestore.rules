@@ -128,7 +128,7 @@ service cloud.firestore {
     }
 
     match /wall_posts/{postId} {
-      allow read: if isAuthenticated();
+      allow read: if true;
       allow create: if isAuthenticated() && isValidWallPost(request.resource.data);
       allow update: if isAuthenticated() && (
         (isOwner(resource.data.authorId) && isValidWallPost(request.resource.data)) ||

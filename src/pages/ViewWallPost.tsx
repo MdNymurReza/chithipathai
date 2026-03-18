@@ -3,54 +3,63 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, updateDoc, increment, arrayUnion, arrayRemove, onSnapshot, deleteDoc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { motion } from 'motion/react';
-import { ArrowLeft, Heart, User, MessageSquare, Trash2 } from 'lucide-react';
+import { ArrowLeft, Heart, User, MessageSquare, Trash2, Share2 } from 'lucide-react';
 import { useAuth } from '../App';
 
 const THEMES: Record<string, any> = {
   romantic: { 
-    bg: 'bg-pink-50', 
-    pattern: 'radial-gradient(circle at 10px 10px, #fce7f3 2px, transparent 0)',
-    border: 'border-pink-200', 
-    accent: 'bg-pink-100',
-    text: 'text-pink-900', 
+    bg: 'bg-rose-50', 
+    pattern: 'linear-gradient(135deg, #fff5f5 0%, #fee2e2 100%), radial-gradient(circle at 10px 10px, #fecaca 1.5px, transparent 0)',
+    border: 'border-rose-200', 
+    accent: 'bg-rose-100',
+    text: 'text-rose-900', 
     font: 'font-serif', 
-    icon: '💝' 
+    icon: '🌹' 
   },
   sad: { 
-    bg: 'bg-blue-50', 
-    pattern: 'linear-gradient(135deg, #dbeafe 25%, transparent 25%)',
-    border: 'border-blue-200', 
-    accent: 'bg-blue-100',
-    text: 'text-blue-900', 
+    bg: 'bg-slate-50', 
+    pattern: 'linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%), repeating-linear-gradient(45deg, rgba(148,163,184,0.05) 0px, rgba(148,163,184,0.05) 1px, transparent 1px, transparent 10px)',
+    border: 'border-slate-200', 
+    accent: 'bg-slate-100',
+    text: 'text-slate-900', 
     font: 'font-serif', 
-    icon: '💧' 
+    icon: '🌧️' 
   },
   funny: { 
-    bg: 'bg-yellow-50', 
-    pattern: 'radial-gradient(#fef08a 1px, transparent 0)',
-    border: 'border-yellow-200', 
-    accent: 'bg-yellow-100',
-    text: 'text-yellow-900', 
+    bg: 'bg-amber-50', 
+    pattern: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%), radial-gradient(circle at 15px 15px, #fcd34d 1.5px, transparent 0)',
+    border: 'border-amber-200', 
+    accent: 'bg-amber-100',
+    text: 'text-amber-900', 
     font: 'font-sans', 
-    icon: '😂' 
+    icon: '✨' 
   },
   birthday: { 
     bg: 'bg-purple-50', 
-    pattern: 'repeating-linear-gradient(45deg, #f3e8ff, #f3e8ff 10px, #ffffff 10px, #ffffff 20px)',
+    pattern: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%), radial-gradient(circle at 20px 20px, #e9d5ff 2px, transparent 0), radial-gradient(circle at 40px 40px, #d8b4fe 1.5px, transparent 0)',
     border: 'border-purple-200', 
     accent: 'bg-purple-100',
     text: 'text-purple-900', 
     font: 'font-sans', 
-    icon: '🎂' 
+    icon: '🎁' 
   },
   islamic: { 
     bg: 'bg-emerald-50', 
-    pattern: 'radial-gradient(circle at 0% 0%, #d1fae5 15%, transparent 15%)',
+    pattern: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%), radial-gradient(circle at center, #10b981 0.5px, transparent 0)',
     border: 'border-emerald-200', 
     accent: 'bg-emerald-100',
     text: 'text-emerald-900', 
     font: 'font-serif', 
-    icon: '🌙' 
+    icon: '🕌' 
+  },
+  professional: { 
+    bg: 'bg-slate-50', 
+    pattern: 'linear-gradient(to right, #f1f5f9 1px, transparent 1px), linear-gradient(to bottom, #f1f5f9 1px, transparent 1px)',
+    border: 'border-slate-300', 
+    accent: 'bg-slate-200',
+    text: 'text-slate-800', 
+    font: 'font-sans', 
+    icon: '🖋️' 
   },
 };
 
@@ -80,7 +89,11 @@ export default function ViewWallPost() {
   }, [postId]);
 
   const handleLike = async () => {
-    if (!user || !post) return;
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+    if (!post) return;
     const isLiked = post.likedBy?.includes(user.uid);
     const postRef = doc(db, 'wall_posts', post.id);
     
@@ -113,6 +126,23 @@ export default function ViewWallPost() {
     }
   };
 
+  const handleShare = () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      navigator.share({
+        title: post.title,
+        text: `Check out this post on ChithiPathao: ${post.title}`,
+        url: url,
+      }).catch(err => console.error('Error sharing:', err));
+    } else {
+      navigator.clipboard.writeText(url).then(() => {
+        alert('লিঙ্কটি কপি করা হয়েছে! (Link copied to clipboard!)');
+      }).catch(err => {
+        console.error('Failed to copy: ', err);
+      });
+    }
+  };
+
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-paper">
       <div className="animate-pulse text-accent font-serif text-xl">ওয়াল পোস্ট লোড হচ্ছে...</div>
@@ -138,6 +168,9 @@ export default function ViewWallPost() {
         animate={{ scale: 1, opacity: 1, y: 0 }}
         className={`w-full max-w-2xl min-h-[500px] paper-card p-12 relative shadow-2xl ${theme.bg} ${theme.border} ${theme.font} overflow-hidden`}
       >
+        {/* Paper Texture Overlay */}
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none paper-texture z-30" />
+
         {/* Theme Pattern */}
         <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: theme.pattern, backgroundSize: post.theme === 'romantic' ? '20px 20px' : 'auto' }} />
 
@@ -181,6 +214,14 @@ export default function ViewWallPost() {
                   <Trash2 size={20} />
                 </button>
               )}
+
+              <button
+                onClick={handleShare}
+                className="p-2 text-ink/20 hover:text-accent transition-colors"
+                title="Share Post"
+              >
+                <Share2 size={20} />
+              </button>
             </div>
             <div className="flex items-center gap-2 text-ink/40">
               <MessageSquare size={20} />

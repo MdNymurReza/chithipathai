@@ -10,62 +10,74 @@ const THEMES = [
   { 
     id: 'romantic', 
     name: 'Romantic', 
-    bg: 'bg-pink-50', 
-    pattern: 'radial-gradient(circle at 10px 10px, #fce7f3 2px, transparent 0)',
-    border: 'border-pink-200', 
-    accent: 'bg-pink-100',
-    text: 'text-pink-900', 
+    bg: 'bg-rose-50', 
+    pattern: 'linear-gradient(135deg, #fff5f5 0%, #fee2e2 100%), radial-gradient(circle at 10px 10px, #fecaca 1.5px, transparent 0)',
+    border: 'border-rose-200', 
+    accent: 'bg-rose-100',
+    text: 'text-rose-900', 
     font: 'font-serif', 
-    icon: '💝',
-    effect: 'shadow-[0_0_20px_rgba(244,114,182,0.3)]'
+    icon: '🌹',
+    effect: 'shadow-[0_0_30px_rgba(225,29,72,0.1)]'
   },
   { 
     id: 'sad', 
     name: 'Sad', 
-    bg: 'bg-blue-50', 
-    pattern: 'linear-gradient(135deg, #dbeafe 25%, transparent 25%)',
-    border: 'border-blue-200', 
-    accent: 'bg-blue-100',
-    text: 'text-blue-900', 
+    bg: 'bg-slate-50', 
+    pattern: 'linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%), repeating-linear-gradient(45deg, rgba(148,163,184,0.05) 0px, rgba(148,163,184,0.05) 1px, transparent 1px, transparent 10px)',
+    border: 'border-slate-200', 
+    accent: 'bg-slate-100',
+    text: 'text-slate-900', 
     font: 'font-serif', 
-    icon: '💧',
-    effect: 'shadow-[0_0_20px_rgba(96,165,250,0.3)]'
+    icon: '🌧️',
+    effect: 'shadow-[0_0_30px_rgba(71,85,105,0.08)]'
   },
   { 
     id: 'funny', 
     name: 'Funny', 
-    bg: 'bg-yellow-50', 
-    pattern: 'radial-gradient(#fef08a 1px, transparent 0)',
-    border: 'border-yellow-200', 
-    accent: 'bg-yellow-100',
-    text: 'text-yellow-900', 
+    bg: 'bg-amber-50', 
+    pattern: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%), radial-gradient(circle at 15px 15px, #fcd34d 1.5px, transparent 0)',
+    border: 'border-amber-200', 
+    accent: 'bg-amber-100',
+    text: 'text-amber-900', 
     font: 'font-sans', 
-    icon: '😂',
-    effect: 'shadow-[0_0_20px_rgba(250,204,21,0.3)]'
+    icon: '✨',
+    effect: 'shadow-[0_0_30px_rgba(217,119,6,0.08)]'
   },
   { 
     id: 'birthday', 
     name: 'Birthday', 
     bg: 'bg-purple-50', 
-    pattern: 'repeating-linear-gradient(45deg, #f3e8ff, #f3e8ff 10px, #ffffff 10px, #ffffff 20px)',
+    pattern: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%), radial-gradient(circle at 20px 20px, #e9d5ff 2px, transparent 0), radial-gradient(circle at 40px 40px, #d8b4fe 1.5px, transparent 0)',
     border: 'border-purple-200', 
     accent: 'bg-purple-100',
     text: 'text-purple-900', 
     font: 'font-sans', 
-    icon: '🎂',
-    effect: 'shadow-[0_0_20px_rgba(192,132,252,0.3)]'
+    icon: '🎁',
+    effect: 'shadow-[0_0_30px_rgba(147,51,234,0.08)]'
   },
   { 
     id: 'islamic', 
     name: 'Islamic', 
     bg: 'bg-emerald-50', 
-    pattern: 'radial-gradient(circle at 0% 0%, #d1fae5 15%, transparent 15%)',
+    pattern: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%), radial-gradient(circle at center, #10b981 0.5px, transparent 0)',
     border: 'border-emerald-200', 
     accent: 'bg-emerald-100',
     text: 'text-emerald-900', 
     font: 'font-serif', 
-    icon: '🌙',
-    effect: 'shadow-[0_0_20px_rgba(52,211,153,0.3)]'
+    icon: '🕌',
+    effect: 'shadow-[0_0_30px_rgba(5,150,105,0.1)]'
+  },
+  { 
+    id: 'professional', 
+    name: 'Professional', 
+    bg: 'bg-slate-50', 
+    pattern: 'linear-gradient(to right, #f1f5f9 1px, transparent 1px), linear-gradient(to bottom, #f1f5f9 1px, transparent 1px)',
+    border: 'border-slate-300', 
+    accent: 'bg-slate-200',
+    text: 'text-slate-800', 
+    font: 'font-sans', 
+    icon: '🖋️',
+    effect: 'shadow-[0_0_20px_rgba(0,0,0,0.05)]'
   },
 ];
 
@@ -291,7 +303,7 @@ export default function Write() {
           {step === 2 && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} key="step2">
               <h2 className="text-3xl mb-8 text-center">থিম পছন্দ করুন</h2>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
                 {THEMES.map(t => (
                   <button
                     key={t.id}
@@ -321,6 +333,9 @@ export default function Write() {
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} key="step3">
               <h2 className="text-3xl mb-8 text-center">চিঠি লিখুন</h2>
               <div className={`paper-card p-8 min-h-[400px] ${theme.bg} border-2 ${theme.border} ${theme.font} relative overflow-hidden`}>
+                {/* Paper Texture Overlay */}
+                <div className="absolute inset-0 opacity-[0.03] pointer-events-none paper-texture z-30" />
+                
                 <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: theme.pattern, backgroundSize: theme.id === 'romantic' ? '20px 20px' : 'auto' }} />
                 <div className="relative z-10">
                   <input

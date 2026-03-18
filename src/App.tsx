@@ -14,6 +14,9 @@ import ViewWallPost from './pages/ViewWallPost';
 import Profile from './pages/Profile';
 import Search from './pages/Search';
 import Wall from './pages/Wall';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
+import Contact from './pages/Contact';
 import Navbar from './components/Navbar';
 
 interface AuthContextType {
@@ -91,10 +94,13 @@ export default function App() {
                 <Route path="/sent" element={user ? <Sent /> : <Navigate to="/auth" />} />
                 <Route path="/write/:receiverId?" element={user ? <Write /> : <Navigate to="/auth" />} />
                 <Route path="/view/:letterId" element={user ? <ViewLetter /> : <Navigate to="/auth" />} />
-                <Route path="/view-post/:postId" element={user ? <ViewWallPost /> : <Navigate to="/auth" />} />
+                <Route path="/view-post/:postId" element={<ViewWallPost />} />
                 <Route path="/profile" element={user ? <Profile /> : <Navigate to="/auth" />} />
                 <Route path="/search" element={user ? <Search /> : <Navigate to="/auth" />} />
-                <Route path="/wall" element={user ? <Wall /> : <Navigate to="/auth" />} />
+                <Route path="/wall" element={<Wall />} />
+                <Route path="/terms" element={<Terms />} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/contact" element={<Contact />} />
               </Routes>
             </main>
           </div>
