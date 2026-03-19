@@ -17,9 +17,16 @@ export default function Search() {
     if (!currentUser) return;
     if (window.confirm("Are you sure you want to block this user?")) {
       try {
-        await updateDoc(doc(db, 'users', currentUser.uid), {
+        const userRef = doc(db, 'users', currentUser.uid);
+        const profileRef = doc(db, 'profiles', currentUser.uid);
+        
+        await updateDoc(userRef, {
           blockedUsers: arrayUnion(userId)
         });
+        await updateDoc(profileRef, {
+          blockedUsers: arrayUnion(userId)
+        });
+        
         alert("User blocked.");
         setResults(results.filter(r => r.id !== userId));
       } catch (error) {
@@ -34,21 +41,53 @@ export default function Search() {
 
     setLoading(true);
     try {
-      const term = searchTerm.toLowerCase();
-      const q = query(
-        collection(db, 'profiles'),
-        or(
-          where('username', '==', term),
-          where('phone', '==', term)
-        ),
-        limit(10)
-      );
+      const term = searchTerm.trim();
+      const lowerTerm = term.toLowerCase();
       
-      const snap = await getDocs(q);
-      const users = snap.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }))
+      // We'll run multiple queries to cover different search criteria
+      const queries = [
+        // Exact username match
+        query(collection(db, 'profiles'), where('username', '==', lowerTerm), limit(10)),
+        // Exact phone match
+        query(collection(db, 'profiles'), where('phone', '==', term), limit(10)),
+        // Full name starts with (case sensitive usually, but we'll try to match what's stored)
+        query(collection(db, 'profiles'), where('fullName', '>=', term), where('fullName', '<=', term + '\uf8ff'), limit(10)),
+      ];
+      
+      const snapshots = await Promise.all(queries.map(q => getDocs(q)));
+      
+      const resultsMap = new Map();
+      snapshots.forEach(snap => {
+        snap.docs.forEach(doc => {
+          resultsMap.set(doc.id, { id: doc.id, ...doc.data() });
+        });
+      });
+
+      let users = Array.from(resultsMap.values())
         .filter(u => u.id !== currentUser?.uid && !profile?.blockedUsers?.includes(u.id));
-      setResults(users);
+
+      // If we still have few results, let's try a client-side search on a larger set
+      if (users.length < 5) {
+        const fallbackQuery = query(collection(db, 'profiles'), limit(50));
+        const fallbackSnap = await getDocs(fallbackQuery);
+        fallbackSnap.docs.forEach(doc => {
+          const data: any = doc.data();
+          const id = doc.id;
+          if (id === currentUser?.uid || profile?.blockedUsers?.includes(id)) return;
+          
+          const fullName = (data.fullName || '').toLowerCase();
+          const username = (data.username || '').toLowerCase();
+          const phone = (data.phone || '');
+
+          if (fullName.includes(lowerTerm) || username.includes(lowerTerm) || phone.includes(term)) {
+            resultsMap.set(id, { id, ...data });
+          }
+        });
+        users = Array.from(resultsMap.values())
+          .filter(u => u.id !== currentUser?.uid && !profile?.blockedUsers?.includes(u.id));
+      }
+
+      setResults(users.slice(0, 15));
     } catch (err) {
       handleFirestoreError(err, OperationType.LIST, 'profiles');
     } finally {
@@ -65,7 +104,7 @@ export default function Search() {
           type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="ইউজারনেম বা ফোন নম্বর দিয়ে খুঁজুন..."
+          placeholder="নাম, ইউজারনেম বা ফোন নম্বর দিয়ে খুঁজুন..."
           className="w-full pl-12 pr-4 py-4 bg-white shadow-sm rounded-2xl border border-black/5 outline-none focus:ring-2 focus:ring-accent/20 transition-all"
         />
         <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-ink/40" size={20} />

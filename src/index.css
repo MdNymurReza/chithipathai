@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Atma:wght@400;600&family=Caveat:wght@400;700&family=Dancing+Script:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Atma:wght@400;600&family=Caveat:wght@400;700&family=Dancing+Script:wght@400;700&family=Galada&family=Mina:wght@400;700&family=Benne&family=Baloo+Da+2:wght@400;600&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -9,9 +9,15 @@
   --font-hand-en: "Caveat", cursive;
   --font-fancy: "Dancing Script", cursive;
   
+  /* New Bangla Fonts */
+  --font-bn-poetry: "Galada", cursive;
+  --font-bn-neat: "Mina", sans-serif;
+  --font-bn-traditional: "Benne", serif;
+  --font-bn-friendly: "Baloo Da 2", cursive;
+  
   --color-paper: #FDFCFB;
   --color-ink: #1A1A1A;
-  --color-accent: #D44D5C; /* Deep rose/red for a romantic/letter feel */
+  --color-accent: #D44D5C; /* Deep rose/red for a letter feel */
   --color-muted: #8E8E8E;
 }
 

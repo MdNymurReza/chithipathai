@@ -166,7 +166,7 @@ export default function ViewWallPost() {
       <motion.div
         initial={{ scale: 0.9, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
-        className={`w-full max-w-2xl min-h-[500px] paper-card p-12 relative shadow-2xl ${theme.bg} ${theme.border} ${theme.font} overflow-hidden`}
+        className={`w-full max-w-2xl min-h-[500px] paper-card p-12 relative shadow-2xl ${theme.bg} ${theme.border} ${post.font || theme.font} overflow-hidden`}
       >
         {/* Paper Texture Overlay */}
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none paper-texture z-30" />

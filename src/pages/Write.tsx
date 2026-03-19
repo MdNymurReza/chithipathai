@@ -88,11 +88,14 @@ const STICKERS = {
 };
 
 const FONTS = [
-  { id: 'font-sans', name: 'Standard Sans', class: 'font-sans' },
-  { id: 'font-serif', name: 'Classic Serif', class: 'font-serif' },
-  { id: 'font-hand-bn', name: 'Bangla Hand', class: 'font-hand-bn' },
-  { id: 'font-hand-en', name: 'English Hand', class: 'font-hand-en' },
-  { id: 'font-fancy', name: 'Fancy Script', class: 'font-fancy' },
+  { id: 'font-sans', name: 'Standard', class: 'font-sans' },
+  { id: 'font-serif', name: 'Classic', class: 'font-serif' },
+  { id: 'font-hand-bn', name: 'Childhood', class: 'font-hand-bn' },
+  { id: 'font-bn-neat', name: 'Neat', class: 'font-bn-neat' },
+  { id: 'font-bn-poetry', name: 'Poetry', class: 'font-bn-poetry' },
+  { id: 'font-bn-traditional', name: 'Traditional', class: 'font-bn-traditional' },
+  { id: 'font-bn-friendly', name: 'Friendly', class: 'font-bn-friendly' },
+  { id: 'font-fancy', name: 'English Script', class: 'font-fancy' },
 ];
 
 export default function Write() {

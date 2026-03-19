@@ -75,11 +75,21 @@ const THEMES = [
   },
 ];
 
+const FONTS = [
+  { id: 'font-sans', name: 'Standard', class: 'font-sans' },
+  { id: 'font-serif', name: 'Classic', class: 'font-serif' },
+  { id: 'font-hand-bn', name: 'Childhood', class: 'font-hand-bn' },
+  { id: 'font-bn-neat', name: 'Neat', class: 'font-bn-neat' },
+  { id: 'font-bn-poetry', name: 'Poetry', class: 'font-bn-poetry' },
+  { id: 'font-bn-traditional', name: 'Traditional', class: 'font-bn-traditional' },
+  { id: 'font-bn-friendly', name: 'Friendly', class: 'font-bn-friendly' },
+];
+
 export default function Wall() {
   const { user, profile } = useAuth();
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [newPost, setNewPost] = useState({ title: '', content: '', theme: THEMES[0].id });
+  const [newPost, setNewPost] = useState({ title: '', content: '', theme: THEMES[0].id, font: FONTS[0].id });
   const [isPosting, setIsPosting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTheme, setSelectedTheme] = useState('all');
@@ -108,11 +118,12 @@ export default function Wall() {
         title: newPost.title,
         content: newPost.content,
         theme: newPost.theme,
+        font: newPost.font,
         createdAt: serverTimestamp(),
         likes: 0,
         likedBy: [] // We'll use this for tracking likes locally
       });
-      setNewPost({ title: '', content: '', theme: THEMES[0].id });
+      setNewPost({ title: '', content: '', theme: THEMES[0].id, font: FONTS[0].id });
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'wall_posts');
     } finally {
@@ -204,6 +215,18 @@ export default function Wall() {
                 </button>
               ))}
             </div>
+            <div className="flex flex-wrap gap-2">
+              {FONTS.map(f => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setNewPost({ ...newPost, font: f.id })}
+                  className={`px-3 py-1 rounded-full text-xs transition-all border ${newPost.font === f.id ? 'bg-accent text-white border-accent' : 'bg-white text-ink/60 border-black/10'}`}
+                >
+                  <span className={f.class}>{f.name}</span>
+                </button>
+              ))}
+            </div>
             <button
               type="submit"
               disabled={isPosting}
@@ -287,8 +310,8 @@ export default function Wall() {
                     <div className="text-2xl">{theme.icon}</div>
                   </div>
 
-                  <h3 className={`text-xl mb-2 ${theme.font} font-bold line-clamp-2`}>{post.title}</h3>
-                  <p className={`text-sm leading-relaxed mb-6 ${theme.font} line-clamp-4 italic opacity-80`}>
+                  <h3 className={`text-xl mb-2 ${post.font || theme.font} font-bold line-clamp-2`}>{post.title}</h3>
+                  <p className={`text-sm leading-relaxed mb-6 ${post.font || theme.font} line-clamp-4 italic opacity-80`}>
                     "{post.content}"
                   </p>
                 </Link>
