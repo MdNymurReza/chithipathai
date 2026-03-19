@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType } from '../firebase';
 import { motion, AnimatePresence } from 'motion/react';
-import { Mail, Lock, ArrowLeft, Send } from 'lucide-react';
+import { Mail, Lock, ArrowLeft, Send, Folder, ChevronDown, Sparkles } from 'lucide-react';
 import { useAuth } from '../App';
+import ScratchCard from '../components/ScratchCard';
 
 const THEMES: Record<string, any> = {
   romantic: { 
@@ -69,14 +70,24 @@ export default function ViewLetter() {
   const navigate = useNavigate();
   const [letter, setLetter] = useState<any>(null);
   const [sender, setSender] = useState<any>(null);
+  const [albums, setAlbums] = useState<any[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [isLocked, setIsLocked] = useState(false);
   const [error, setError] = useState('');
   const [permissionError, setPermissionError] = useState(false);
+  const [showAlbumMenu, setShowAlbumMenu] = useState(false);
 
   useEffect(() => {
-    if (letterId) {
+    if (letterId && user) {
+      // Fetch user albums
+      const fetchAlbums = async () => {
+        const q = query(collection(db, 'albums'), where('userId', '==', user.uid));
+        const snap = await getDocs(q);
+        setAlbums(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      };
+      fetchAlbums();
+
       const unsubLetter = onSnapshot(doc(db, 'letters', letterId), async (snap) => {
         if (snap.exists()) {
           const data = { id: snap.id, ...snap.data() } as any;
@@ -116,6 +127,16 @@ export default function ViewLetter() {
     }
   };
 
+  const handleMoveToAlbum = async (albumId: string | null) => {
+    if (!letterId) return;
+    try {
+      await updateDoc(doc(db, 'letters', letterId), { albumId });
+      setShowAlbumMenu(false);
+    } catch (error) {
+      console.error("Error moving letter to album:", error);
+    }
+  };
+
   if (permissionError) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center p-10 text-center">
@@ -141,15 +162,66 @@ export default function ViewLetter() {
   if (!letter) return <div className="text-center py-20">চিঠিটি খুঁজে পাওয়া যায়নি।</div>;
 
   const theme = THEMES[letter.theme] || THEMES.romantic;
+  const fontClass = letter.font || 'font-serif';
 
   return (
     <div className="min-h-screen bg-paper p-4 py-10 flex flex-col items-center">
-      <button 
-        onClick={() => navigate(-1)}
-        className="self-start mb-8 flex items-center gap-2 text-ink/60 hover:text-accent transition-colors"
-      >
-        <ArrowLeft size={20} /> ফিরে যান
-      </button>
+      <div className="w-full max-w-2xl flex justify-between items-center mb-8">
+        <button 
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-ink/60 hover:text-accent transition-colors"
+        >
+          <ArrowLeft size={20} /> ফিরে যান
+        </button>
+
+        {user?.uid === letter.receiverId && (
+          <div className="relative">
+            <button 
+              onClick={() => setShowAlbumMenu(!showAlbumMenu)}
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-black/5 rounded-full text-sm font-bold hover:bg-black/5 transition-all"
+            >
+              <Folder size={16} className="text-accent" />
+              {letter.albumId ? albums.find(a => a.id === letter.albumId)?.name : 'অ্যালবামে রাখুন'}
+              <ChevronDown size={14} />
+            </button>
+            
+            <AnimatePresence>
+              {showAlbumMenu && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-black/5 z-50 overflow-hidden"
+                >
+                  <div className="p-2 border-b border-black/5 text-[10px] uppercase tracking-widest text-ink/40 font-bold px-4">
+                    অ্যালবাম নির্বাচন করুন
+                  </div>
+                  <button
+                    onClick={() => handleMoveToAlbum(null)}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-black/5 transition-colors ${!letter.albumId ? 'text-accent font-bold' : ''}`}
+                  >
+                    কোনোটিই নয় (None)
+                  </button>
+                  {albums.map(album => (
+                    <button
+                      key={album.id}
+                      onClick={() => handleMoveToAlbum(album.id)}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-black/5 transition-colors ${letter.albumId === album.id ? 'text-accent font-bold' : ''}`}
+                    >
+                      {album.name}
+                    </button>
+                  ))}
+                  {albums.length === 0 && (
+                    <div className="px-4 py-3 text-xs text-ink/40 italic">
+                      প্রথমে ইনবক্স থেকে অ্যালবাম তৈরি করুন।
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+      </div>
 
       <AnimatePresence mode="wait">
         {!isOpen ? (
@@ -190,7 +262,7 @@ export default function ViewLetter() {
             key="letter"
             initial={{ scale: 0.8, opacity: 0, y: 50 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
-            className={`w-full max-w-2xl min-h-[600px] paper-card p-12 relative shadow-2xl ${theme.bg} ${theme.border} ${theme.font} overflow-hidden`}
+            className={`w-full max-w-2xl min-h-[600px] paper-card p-12 relative shadow-2xl ${theme.bg} ${theme.border} ${fontClass} overflow-hidden`}
           >
             {/* Paper Texture Overlay */}
             <div className="absolute inset-0 opacity-[0.03] pointer-events-none paper-texture z-30" />
@@ -224,9 +296,20 @@ export default function ViewLetter() {
                 <h1 className="text-4xl">{letter.title}</h1>
                 <div className="text-4xl">{theme.icon}</div>
               </div>
-              <div className="text-xl leading-relaxed whitespace-pre-wrap mb-20 text-ink/80">
+              <div className="text-xl leading-relaxed whitespace-pre-wrap mb-10 text-ink/80">
                 {letter.content}
               </div>
+
+              {letter.scratchConfig?.enabled && (
+                <div className="mb-20 flex justify-center">
+                  <ScratchCard width={400} height={120}>
+                    <div className="flex flex-col items-center gap-2">
+                      <Sparkles className="text-accent" size={20} />
+                      <p className="text-lg font-bold text-accent">{letter.scratchConfig.secret}</p>
+                    </div>
+                  </ScratchCard>
+                </div>
+              )}
 
               <div className="mt-auto pt-10 border-t border-black/5 flex justify-between items-end italic text-ink/60">
                 <div>

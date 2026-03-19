@@ -4,7 +4,7 @@ import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, update
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { useAuth } from '../App';
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart, Send, User, MessageSquare, Share2 } from 'lucide-react';
+import { Heart, Send, User, MessageSquare, Share2, Search, Filter } from 'lucide-react';
 
 const THEMES = [
   { 
@@ -81,6 +81,8 @@ export default function Wall() {
   const [loading, setLoading] = useState(true);
   const [newPost, setNewPost] = useState({ title: '', content: '', theme: THEMES[0].id });
   const [isPosting, setIsPosting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTheme, setSelectedTheme] = useState('all');
 
   useEffect(() => {
     const q = query(collection(db, 'wall_posts'), orderBy('createdAt', 'desc'));
@@ -150,6 +152,13 @@ export default function Wall() {
     }
   };
 
+  const filteredPosts = posts.filter(post => {
+    const matchesSearch = (post.title || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
+                         (post.content || '').toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesTheme = selectedTheme === 'all' || post.theme === selectedTheme;
+    return matchesSearch && matchesTheme;
+  });
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-paper">
@@ -211,11 +220,41 @@ export default function Wall() {
         </div>
       )}
 
+      {/* Search and Filter */}
+      <div className="flex flex-col sm:flex-row gap-4 mb-8">
+        <div className="relative flex-grow">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ink/40" size={18} />
+          <input
+            type="text"
+            placeholder="ওয়াল পোস্ট খুঁজুন..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="input-field pl-10 w-full"
+          />
+        </div>
+        <div className="relative min-w-[150px]">
+          <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-ink/40" size={18} />
+          <select
+            value={selectedTheme}
+            onChange={e => setSelectedTheme(e.target.value)}
+            className="input-field pl-10 appearance-none bg-white pr-10"
+          >
+            <option value="all">সব থিম</option>
+            {THEMES.map(t => (
+              <option key={t.id} value={t.id}>{t.name}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       {/* Posts List */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <AnimatePresence>
-          {posts.map((post) => {
-            const theme = THEMES.find(t => t.id === post.theme) || THEMES[0];
+          {filteredPosts.length === 0 ? (
+            <div className="col-span-full text-center py-20 paper-card">কোনো পোস্ট পাওয়া যায়নি।</div>
+          ) : (
+            filteredPosts.map((post) => {
+              const theme = THEMES.find(t => t.id === post.theme) || THEMES[0];
             const isLiked = post.likedBy?.includes(user?.uid);
 
             return (
@@ -278,7 +317,7 @@ export default function Wall() {
                 </div>
               </motion.div>
             );
-          })}
+          }) )}
         </AnimatePresence>
       </div>
     </div>

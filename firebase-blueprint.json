@@ -23,13 +23,21 @@
         "receiverId": { "type": "string", "description": "ID of the receiver" },
         "title": { "type": "string", "description": "Title of the letter" },
         "content": { "type": "string", "description": "Content of the letter" },
-        "summary": { "type": "string", "description": "AI generated summary of the letter" },
         "theme": { "type": "string", "enum": ["romantic", "sad", "funny", "birthday", "islamic"], "description": "Theme of the letter" },
+        "font": { "type": "string", "description": "Font family used for the letter" },
         "isAnonymous": { "type": "boolean", "description": "Whether the sender is anonymous" },
         "noReply": { "type": "boolean", "description": "Whether a reply is needed" },
         "password": { "type": "string", "description": "Optional password protection" },
         "scheduledAt": { "type": "string", "format": "date-time", "description": "Future delivery time" },
         "createdAt": { "type": "string", "format": "date-time", "description": "Creation time" },
+        "albumId": { "type": "string", "description": "ID of the album this letter belongs to" },
+        "scratchConfig": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "secret": { "type": "string", "description": "The hidden text to reveal" }
+          }
+        },
         "stickers": {
           "type": "array",
           "items": {
@@ -57,9 +65,10 @@
         "content": { "type": "string", "description": "Content of the post" },
         "theme": { "type": "string", "enum": ["romantic", "sad", "funny", "birthday", "islamic"], "description": "Theme of the post" },
         "createdAt": { "type": "string", "format": "date-time", "description": "Creation time" },
-        "likes": { "type": "number", "description": "Number of likes" }
+        "likes": { "type": "number", "description": "Number of likes" },
+        "likedBy": { "type": "array", "items": { "type": "string" }, "description": "List of user IDs who liked the post" }
       },
-      "required": ["authorId", "authorName", "title", "content", "theme", "createdAt"]
+      "required": ["authorId", "authorName", "title", "content", "theme", "createdAt", "likes"]
     },
     "Notification": {
       "title": "Notification",
@@ -83,6 +92,17 @@
         "phone": { "type": "string" }
       },
       "required": ["fullName", "username", "phone"]
+    },
+    "Album": {
+      "title": "Album",
+      "description": "A collection of letters",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "name", "createdAt"]
     }
   },
   "firestore": {
@@ -90,6 +110,7 @@
     "/profiles/{userId}": { "schema": "Profile", "description": "Public profiles for search" },
     "/letters/{letterId}": { "schema": "Letter", "description": "Digital letters" },
     "/wall_posts/{postId}": { "schema": "WallPost", "description": "Public wall posts" },
-    "/notifications/{notificationId}": { "schema": "Notification", "description": "User notifications" }
+    "/notifications/{notificationId}": { "schema": "Notification", "description": "User notifications" },
+    "/albums/{albumId}": { "schema": "Album", "description": "User letter albums" }
   }
 }

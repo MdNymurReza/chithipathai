@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { collection, query, where, orderBy, onSnapshot, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, doc, getDoc, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { useAuth } from '../App';
 import { motion, AnimatePresence } from 'motion/react';
-import { Mail, Lock, Clock } from 'lucide-react';
+import { Mail, Lock, Clock, FolderPlus, Folder, X, Plus, ChevronRight, Archive } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 const THEMES = [
@@ -68,12 +68,29 @@ const THEMES = [
 export default function Inbox() {
   const { user } = useAuth();
   const [letters, setLetters] = useState<any[]>([]);
+  const [albums, setAlbums] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [senders, setSenders] = useState<Record<string, any>>({});
+  const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
+  const [showNewAlbumModal, setShowNewAlbumModal] = useState(false);
+  const [newAlbumName, setNewAlbumName] = useState('');
+  const [creatingAlbum, setCreatingAlbum] = useState(false);
 
   useEffect(() => {
     if (!user) return;
 
+    // Fetch Albums
+    const qAlbums = query(
+      collection(db, 'albums'),
+      where('userId', '==', user.uid),
+      orderBy('createdAt', 'desc')
+    );
+
+    const unsubAlbums = onSnapshot(qAlbums, (snap) => {
+      setAlbums(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
+    // Fetch Letters
     const q = query(
       collection(db, 'letters'),
       where('receiverId', '==', user.uid),
@@ -112,8 +129,35 @@ export default function Inbox() {
       handleFirestoreError(error, OperationType.LIST, 'letters');
     });
 
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      unsubAlbums();
+    };
   }, [user]);
+
+  const handleCreateAlbum = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !newAlbumName.trim()) return;
+
+    setCreatingAlbum(true);
+    try {
+      await addDoc(collection(db, 'albums'), {
+        userId: user.uid,
+        name: newAlbumName.trim(),
+        createdAt: serverTimestamp(),
+      });
+      setNewAlbumName('');
+      setShowNewAlbumModal(false);
+    } catch (error) {
+      console.error("Error creating album:", error);
+    } finally {
+      setCreatingAlbum(false);
+    }
+  };
+
+  const filteredLetters = selectedAlbumId 
+    ? letters.filter(l => l.albumId === selectedAlbumId)
+    : letters;
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-paper">
@@ -127,18 +171,48 @@ export default function Inbox() {
         <Mail size={36} /> আপনার ইনবক্স (Inbox)
       </h1>
 
-      {letters.length === 0 ? (
+      {/* Album Tabs */}
+      <div className="flex flex-wrap items-center gap-3 mb-10">
+        <button
+          onClick={() => setSelectedAlbumId(null)}
+          className={`px-6 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${selectedAlbumId === null ? 'bg-accent text-white shadow-lg shadow-accent/20' : 'bg-white text-ink/60 border border-black/5 hover:bg-black/5'}`}
+        >
+          <Archive size={16} /> সব চিঠি ({letters.length})
+        </button>
+        
+        {albums.map(album => (
+          <button
+            key={album.id}
+            onClick={() => setSelectedAlbumId(album.id)}
+            className={`px-6 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${selectedAlbumId === album.id ? 'bg-accent text-white shadow-lg shadow-accent/20' : 'bg-white text-ink/60 border border-black/5 hover:bg-black/5'}`}
+          >
+            <Folder size={16} /> {album.name} ({letters.filter(l => l.albumId === album.id).length})
+          </button>
+        ))}
+
+        <button
+          onClick={() => setShowNewAlbumModal(true)}
+          className="w-10 h-10 rounded-full bg-accent/5 text-accent flex items-center justify-center hover:bg-accent hover:text-white transition-all border border-accent/10"
+          title="নতুন অ্যালবাম তৈরি করুন"
+        >
+          <Plus size={20} />
+        </button>
+      </div>
+
+      {filteredLetters.length === 0 ? (
         <div className="text-center py-20 paper-card shadow-lg">
           <div className="w-20 h-20 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-6">
             <Mail size={40} className="text-accent/40" />
           </div>
-          <p className="text-ink/60 text-lg">আপনার ইনবক্স এখন খালি।</p>
-          <Link to="/search" className="btn-primary mt-6 inline-block">কাউকে চিঠি পাঠান</Link>
+          <p className="text-ink/60 text-lg">
+            {selectedAlbumId ? 'এই অ্যালবামে কোনো চিঠি নেই।' : 'আপনার ইনবক্স এখন খালি।'}
+          </p>
+          {!selectedAlbumId && <Link to="/search" className="btn-primary mt-6 inline-block">কাউকে চিঠি পাঠান</Link>}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           <AnimatePresence>
-            {letters.map((letter) => {
+            {filteredLetters.map((letter) => {
               const theme = THEMES.find(t => t.id === letter.theme) || THEMES[0];
               const sender = senders[letter.senderId];
 
@@ -173,18 +247,18 @@ export default function Inbox() {
                       
                       <div className="p-6 flex-grow flex flex-col relative z-10 bg-white/40 backdrop-blur-[1px]">
                         <div className="mb-4">
-                          <div className="flex justify-between items-start gap-2 mb-1">
-                            <h3 className={`text-2xl font-bold ${theme.font} leading-tight text-ink`}>
+                          <div className="flex justify-between items-start gap-2 mb-2">
+                            <h3 className={`text-3xl font-bold ${theme.font} leading-tight text-ink drop-shadow-sm`}>
                               {letter.title}
                             </h3>
                             {letter.password && (
-                              <div className="p-1.5 bg-accent/10 rounded-full text-accent">
-                                <Lock size={14} />
+                              <div className="p-2 bg-accent/10 rounded-full text-accent shadow-sm">
+                                <Lock size={16} />
                               </div>
                             )}
                           </div>
-                          <div className="flex items-center gap-2 text-ink/40">
-                            <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+                          <div className="flex items-center gap-2 text-ink/60 bg-black/5 self-start px-3 py-1 rounded-full mb-4">
+                            {!letter.read && <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />}
                             <span className="text-xs font-bold uppercase tracking-widest">
                               {letter.isAnonymous ? 'Anonymous' : (sender?.fullName || 'Loading...')}
                             </span>
@@ -192,7 +266,7 @@ export default function Inbox() {
                         </div>
                         
                         <div className="flex-grow">
-                          <p className="text-sm text-ink/60 line-clamp-2 mb-4 italic font-serif leading-relaxed">
+                          <p className="text-sm text-ink/70 line-clamp-3 mb-4 italic font-serif leading-relaxed bg-white/30 p-3 rounded-lg border border-black/5">
                             "{letter.content}"
                           </p>
                         </div>
@@ -215,6 +289,47 @@ export default function Inbox() {
           </AnimatePresence>
         </div>
       )}
+
+      {/* New Album Modal */}
+      <AnimatePresence>
+        {showNewAlbumModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="paper-card p-8 w-full max-w-md shadow-2xl"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-serif text-accent">নতুন অ্যালবাম (New Album)</h2>
+                <button onClick={() => setShowNewAlbumModal(false)} className="text-ink/40 hover:text-ink">
+                  <X size={24} />
+                </button>
+              </div>
+              <form onSubmit={handleCreateAlbum} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-bold mb-2">অ্যালবামের নাম (Album Name)</label>
+                  <input
+                    type="text"
+                    value={newAlbumName}
+                    onChange={e => setNewAlbumName(e.target.value)}
+                    placeholder="যেমন: প্রিয় স্মৃতি, বন্ধুদের চিঠি..."
+                    className="input-field"
+                    autoFocus
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={creatingAlbum || !newAlbumName.trim()}
+                  className="btn-primary w-full flex items-center justify-center gap-2"
+                >
+                  {creatingAlbum ? 'তৈরি হচ্ছে...' : <><FolderPlus size={20} /> অ্যালবাম তৈরি করুন</>}
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

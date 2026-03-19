@@ -87,6 +87,14 @@ const STICKERS = {
   memo: ['Note...']
 };
 
+const FONTS = [
+  { id: 'font-sans', name: 'Standard Sans', class: 'font-sans' },
+  { id: 'font-serif', name: 'Classic Serif', class: 'font-serif' },
+  { id: 'font-hand-bn', name: 'Bangla Hand', class: 'font-hand-bn' },
+  { id: 'font-hand-en', name: 'English Hand', class: 'font-hand-en' },
+  { id: 'font-fancy', name: 'Fancy Script', class: 'font-fancy' },
+];
+
 export default function Write() {
   const { receiverId } = useParams();
   const { user } = useAuth();
@@ -102,8 +110,11 @@ export default function Write() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [theme, setTheme] = useState(THEMES[0]);
+  const [font, setFont] = useState(FONTS[0]);
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [noReply, setNoReply] = useState(false);
+  const [scratchEnabled, setScratchEnabled] = useState(false);
+  const [scratchSecret, setScratchSecret] = useState('');
   const [password, setPassword] = useState('');
   const [scheduledAt, setScheduledAt] = useState('');
   const [stickers, setStickers] = useState<any[]>([]);
@@ -201,8 +212,13 @@ export default function Write() {
         title: title || '',
         content: content || '',
         theme: theme.id,
+        font: font.id,
         isAnonymous: !!isAnonymous,
         noReply: !!noReply,
+        scratchConfig: {
+          enabled: scratchEnabled,
+          secret: scratchSecret || null,
+        },
         password: password || null,
         scheduledAt: scheduledAt ? Timestamp.fromDate(new Date(scheduledAt)) : null,
         createdAt: serverTimestamp(),
@@ -211,6 +227,7 @@ export default function Write() {
           if (s.text !== undefined) clean.text = s.text;
           return clean;
         }),
+        albumId: null, // Ensure albumId is present
       };
 
       // Final check for undefined
@@ -240,6 +257,7 @@ export default function Write() {
       navigate('/sent');
     } catch (err: any) {
       console.error("Send letter error:", err);
+      handleFirestoreError(err, OperationType.WRITE, 'letters');
       let msg = "চিঠি পাঠানো সম্ভব হয়নি। (Failed to send letter)";
       if (err.code === 'permission-denied') {
         msg = "আপনার এই চিঠি পাঠানোর অনুমতি নেই। সম্ভবত আপনি ব্লকড অথবা ডাটা ইনভ্যালিড। (Permission denied. You might be blocked or data is invalid.)";
@@ -332,7 +350,21 @@ export default function Write() {
           {step === 3 && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} key="step3">
               <h2 className="text-3xl mb-8 text-center">চিঠি লিখুন</h2>
-              <div className={`paper-card p-8 min-h-[400px] ${theme.bg} border-2 ${theme.border} ${theme.font} relative overflow-hidden`}>
+              
+              {/* Font Picker */}
+              <div className="flex flex-wrap justify-center gap-2 mb-6">
+                {FONTS.map(f => (
+                  <button
+                    key={f.id}
+                    onClick={() => setFont(f)}
+                    className={`px-4 py-2 rounded-full text-sm border transition-all ${font.id === f.id ? 'bg-accent text-white border-accent' : 'bg-white text-ink/60 border-black/10 hover:border-accent/40'}`}
+                  >
+                    <span className={f.class}>{f.name}</span>
+                  </button>
+                ))}
+              </div>
+
+              <div className={`paper-card p-8 min-h-[400px] ${theme.bg} border-2 ${theme.border} ${font.class} relative overflow-hidden`}>
                 {/* Paper Texture Overlay */}
                 <div className="absolute inset-0 opacity-[0.03] pointer-events-none paper-texture z-30" />
                 
@@ -357,7 +389,7 @@ export default function Write() {
 
           {step === 4 && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} key="step4" className="max-w-md mx-auto space-y-6">
-              <h2 className="text-3xl mb-8 text-center">গোপনীয়তা</h2>
+              <h2 className="text-3xl mb-8 text-center">গোপনীয়তা ও স্পেশাল</h2>
               <div className="flex items-center justify-between p-4 paper-card">
                 <div className="flex items-center gap-3">
                   <User size={20} className="text-accent" />
@@ -371,6 +403,28 @@ export default function Write() {
                   <span>রিপ্লাই প্রয়োজন নেই</span>
                 </div>
                 <input type="checkbox" checked={noReply} onChange={e => setNoReply(e.target.checked)} className="accent-accent w-5 h-5" />
+              </div>
+              
+              <div className="p-4 paper-card space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Sparkles size={20} className="text-accent" />
+                    <span>স্ক্র্যাচ টু রিভিল (Scratch to Reveal)</span>
+                  </div>
+                  <input type="checkbox" checked={scratchEnabled} onChange={e => setScratchEnabled(e.target.checked)} className="accent-accent w-5 h-5" />
+                </div>
+                {scratchEnabled && (
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
+                    <p className="text-xs text-ink/40 mb-2">গোপন মেসেজটি লিখুন যা স্ক্র্যাচ করলে দেখা যাবে:</p>
+                    <input 
+                      type="text" 
+                      value={scratchSecret} 
+                      onChange={e => setScratchSecret(e.target.value)} 
+                      placeholder="গোপন কথা..." 
+                      className="input-field"
+                    />
+                  </motion.div>
+                )}
               </div>
             </motion.div>
           )}
@@ -472,11 +526,16 @@ export default function Write() {
                 </div>
               )}
 
-              <div className={`paper-card p-8 max-w-lg mx-auto text-left shadow-xl ${theme.bg} ${theme.border} ${theme.font} relative overflow-hidden`}>
+              <div className={`paper-card p-8 max-w-lg mx-auto text-left shadow-xl ${theme.bg} ${theme.border} ${font.class} relative overflow-hidden`}>
                 <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: theme.pattern, backgroundSize: theme.id === 'romantic' ? '20px 20px' : 'auto' }} />
                 <div className="relative z-10">
                   <h3 className="text-2xl mb-4">{title}</h3>
                   <p className="whitespace-pre-wrap">{content}</p>
+                  {scratchEnabled && (
+                    <div className="mt-4 p-3 bg-black/5 rounded-lg border border-dashed border-black/10 text-sm italic">
+                      [Scratch to reveal: {scratchSecret}]
+                    </div>
+                  )}
                   <div className="mt-8 pt-4 border-t border-black/5 text-sm italic">
                     To: {receiver?.fullName}
                     <br />
