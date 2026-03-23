@@ -4,7 +4,7 @@ import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, update
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { useAuth } from '../App';
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart, Send, User, MessageSquare, Share2, Search, Filter } from 'lucide-react';
+import { Heart, Send, User, MessageSquare, Share2, Search, Filter, Shield, Lock } from 'lucide-react';
 
 const THEMES = [
   { 
@@ -89,7 +89,7 @@ export default function Wall() {
   const { user, profile } = useAuth();
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [newPost, setNewPost] = useState({ title: '', content: '', theme: THEMES[0].id, font: FONTS[0].id });
+  const [newPost, setNewPost] = useState({ title: '', content: '', theme: THEMES[0].id, font: FONTS[0].id, password: '' });
   const [isPosting, setIsPosting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTheme, setSelectedTheme] = useState('all');
@@ -119,11 +119,12 @@ export default function Wall() {
         content: newPost.content,
         theme: newPost.theme,
         font: newPost.font,
+        password: newPost.password || null,
         createdAt: serverTimestamp(),
         likes: 0,
         likedBy: [] // We'll use this for tracking likes locally
       });
-      setNewPost({ title: '', content: '', theme: THEMES[0].id, font: FONTS[0].id });
+      setNewPost({ title: '', content: '', theme: THEMES[0].id, font: FONTS[0].id, password: '' });
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'wall_posts');
     } finally {
@@ -227,6 +228,20 @@ export default function Wall() {
                 </button>
               ))}
             </div>
+            <div className="flex items-center gap-2">
+              <div className="relative flex-grow">
+                <input
+                  type="password"
+                  value={newPost.password}
+                  onChange={e => setNewPost({ ...newPost, password: e.target.value })}
+                  placeholder="পাসওয়ার্ড (ঐচ্ছিক) - Password (Optional)"
+                  className="input-field pl-10"
+                />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-ink/40">
+                  <Shield size={18} />
+                </div>
+              </div>
+            </div>
             <button
               type="submit"
               disabled={isPosting}
@@ -294,27 +309,37 @@ export default function Wall() {
                 {/* Theme Pattern */}
                 <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: theme.pattern, backgroundSize: post.theme === 'romantic' ? '20px 20px' : 'auto' }} />
 
-                <Link to={`/view-post/${post.id}`} className="flex-grow relative z-10">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-white/50 flex items-center justify-center">
-                        <User size={16} className="text-accent" />
+                  <Link to={`/view-post/${post.id}`} className="flex-grow relative z-10">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-white/50 flex items-center justify-center">
+                          <User size={16} className="text-accent" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold">{post.authorName}</p>
+                          <p className="text-[10px] opacity-60">
+                            {post.createdAt?.toDate().toLocaleDateString('bn-BD')}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-bold">{post.authorName}</p>
-                        <p className="text-[10px] opacity-60">
-                          {post.createdAt?.toDate().toLocaleDateString('bn-BD')}
-                        </p>
+                      <div className="flex items-center gap-2">
+                        {post.password && <Lock size={14} className="text-accent" />}
+                        <div className="text-2xl">{theme.icon}</div>
                       </div>
                     </div>
-                    <div className="text-2xl">{theme.icon}</div>
-                  </div>
 
-                  <h3 className={`text-xl mb-2 ${post.font || theme.font} font-bold line-clamp-2`}>{post.title}</h3>
-                  <p className={`text-sm leading-relaxed mb-6 ${post.font || theme.font} line-clamp-4 italic opacity-80`}>
-                    "{post.content}"
-                  </p>
-                </Link>
+                    <h3 className={`text-xl mb-2 ${post.font || theme.font} font-bold line-clamp-2`}>{post.title}</h3>
+                    {post.password ? (
+                      <div className="flex flex-col items-center justify-center py-8 bg-black/5 rounded-xl border border-dashed border-black/10">
+                        <Lock size={24} className="text-ink/20 mb-2" />
+                        <p className="text-xs text-ink/40 font-bold uppercase tracking-widest">Password Protected</p>
+                      </div>
+                    ) : (
+                      <p className={`text-sm leading-relaxed mb-6 ${post.font || theme.font} line-clamp-4 italic opacity-80`}>
+                        "{post.content}"
+                      </p>
+                    )}
+                  </Link>
 
                 <div className="flex items-center justify-between pt-4 border-t border-black/5 relative z-10">
                   <div className="flex items-center gap-3 relative z-10">

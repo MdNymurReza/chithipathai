@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, updateDoc, increment, arrayUnion, arrayRemove, onSnapshot, deleteDoc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { motion } from 'motion/react';
-import { ArrowLeft, Heart, User, MessageSquare, Trash2, Share2 } from 'lucide-react';
+import { ArrowLeft, Heart, User, MessageSquare, Trash2, Share2, Lock } from 'lucide-react';
 import { useAuth } from '../App';
 
 const THEMES: Record<string, any> = {
@@ -69,12 +69,20 @@ export default function ViewWallPost() {
   const navigate = useNavigate();
   const [post, setPost] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [passwordError, setPasswordError] = useState(false);
 
   useEffect(() => {
     if (postId) {
       const unsubPost = onSnapshot(doc(db, 'wall_posts', postId), (snap) => {
         if (snap.exists()) {
-          setPost({ id: snap.id, ...snap.data() });
+          const data = { id: snap.id, ...snap.data() } as any;
+          setPost(data);
+          // If no password, it's automatically unlocked
+          if (!data.password) {
+            setIsUnlocked(true);
+          }
         } else {
           setPost(null);
         }
@@ -87,6 +95,16 @@ export default function ViewWallPost() {
       return () => unsubPost();
     }
   }, [postId]);
+
+  const handleUnlock = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (post && passwordInput === post.password) {
+      setIsUnlocked(true);
+      setPasswordError(false);
+    } else {
+      setPasswordError(true);
+    }
+  };
 
   const handleLike = async () => {
     if (!user) {
@@ -191,9 +209,33 @@ export default function ViewWallPost() {
           </div>
 
           <h1 className="text-4xl mb-8 font-bold">{post.title}</h1>
-          <div className="text-xl leading-relaxed whitespace-pre-wrap mb-16 text-ink/80">
-            {post.content}
-          </div>
+          
+          {!isUnlocked ? (
+            <div className="flex flex-col items-center justify-center py-20 bg-black/5 rounded-3xl border-2 border-dashed border-black/10">
+              <Lock size={48} className="text-accent mb-6" />
+              <h2 className="text-2xl font-bold mb-2">পাসওয়ার্ড প্রয়োজন</h2>
+              <p className="text-ink/60 mb-8">এই পোস্টটি দেখার জন্য পাসওয়ার্ড দিন।</p>
+              
+              <form onSubmit={handleUnlock} className="w-full max-w-xs space-y-4">
+                <input
+                  type="password"
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  placeholder="পাসওয়ার্ড লিখুন..."
+                  className={`input-field text-center ${passwordError ? 'border-red-500 ring-red-500/20' : ''}`}
+                  autoFocus
+                />
+                {passwordError && (
+                  <p className="text-red-500 text-sm text-center">ভুল পাসওয়ার্ড! আবার চেষ্টা করুন।</p>
+                )}
+                <button type="submit" className="btn-primary w-full">আনলক করুন</button>
+              </form>
+            </div>
+          ) : (
+            <div className="text-xl leading-relaxed whitespace-pre-wrap mb-16 text-ink/80">
+              {post.content}
+            </div>
+          )}
 
           <div className="mt-auto pt-8 border-t border-black/5 flex justify-between items-center">
             <div className="flex items-center gap-4">

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../App';
 import { motion } from 'motion/react';
-import { Mail, Send, Shield, Clock, Heart, Sparkles, ArrowRight, UserPlus, Globe, MessageSquare, User, Share2 } from 'lucide-react';
+import { Mail, Send, Shield, Clock, Heart, Sparkles, ArrowRight, UserPlus, Globe, MessageSquare, User, Share2, Lock } from 'lucide-react';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 
@@ -134,6 +134,27 @@ export default function Landing() {
         <div className="absolute top-[60%] right-[-10%] w-[40%] aspect-square bg-pink-200/10 rounded-full blur-3xl" />
         <div className="absolute bottom-[-10%] left-[20%] w-[25%] aspect-square bg-emerald-200/10 rounded-full blur-3xl" />
       </div>
+
+      {/* Header for non-logged in users */}
+      {!user && (
+        <header className="relative z-50 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2">
+            <img 
+              src="/logo.png" 
+              alt="ChithiPathao Logo" 
+              className="w-10 h-10 object-contain"
+              referrerPolicy="no-referrer"
+            />
+            <span className="font-serif font-bold text-xl tracking-tight">
+              ChithiPathao
+            </span>
+          </Link>
+          <div className="flex items-center gap-4">
+            <Link to="/auth" className="text-sm font-bold hover:text-accent transition-colors">লগইন</Link>
+            <Link to="/auth" className="btn-primary py-2 px-6 text-sm">শুরু করুন</Link>
+          </div>
+        </header>
+      )}
 
       {/* Hero Section */}
       <section className="relative pt-20 pb-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
@@ -298,12 +319,22 @@ export default function Landing() {
                         </div>
                         <span className="text-sm font-bold">{post.authorName}</span>
                       </div>
-                      <div className="text-xl">{theme.icon}</div>
+                      <div className="flex items-center gap-2">
+                        {post.password && <Lock size={14} className="text-accent" />}
+                        <div className="text-xl">{theme.icon}</div>
+                      </div>
                     </div>
                     <h3 className="text-lg font-bold mb-2 line-clamp-1">{post.title}</h3>
-                    <p className="text-sm text-ink/60 line-clamp-3 mb-4 italic">
-                      "{post.content}"
-                    </p>
+                    {post.password ? (
+                      <div className="flex flex-col items-center justify-center py-4 bg-black/5 rounded-xl border border-dashed border-black/10 mb-4">
+                        <Lock size={18} className="text-ink/20 mb-1" />
+                        <p className="text-[10px] text-ink/40 font-bold uppercase tracking-widest">Protected</p>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-ink/60 line-clamp-3 mb-4 italic">
+                        "{post.content}"
+                      </p>
+                    )}
                     <div className="flex items-center justify-between">
                       <div className="text-[10px] text-ink/30 uppercase tracking-widest">
                         {post.createdAt?.toDate().toLocaleDateString('bn-BD')}
