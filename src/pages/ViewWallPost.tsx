@@ -61,6 +61,24 @@ const THEMES: Record<string, any> = {
     font: 'font-sans', 
     icon: '🖋️' 
   },
+  midnight: { 
+    bg: 'bg-slate-900', 
+    pattern: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.1) 1px, transparent 0)',
+    border: 'border-slate-800', 
+    accent: 'bg-slate-800',
+    text: 'text-slate-100', 
+    font: 'font-serif', 
+    icon: '🌙'
+  },
+  vintage: { 
+    bg: 'bg-[#f4ecd8]', 
+    pattern: 'url("https://www.transparenttextures.com/patterns/old-paper.png")',
+    border: 'border-[#d4c5a9]', 
+    accent: 'bg-[#e8dec5]',
+    text: 'text-[#5d4037]', 
+    font: 'font-serif', 
+    icon: '📜'
+  },
 };
 
 export default function ViewWallPost() {

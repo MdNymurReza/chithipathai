@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, updateDoc, doc, arrayUnion, arrayRemove, increment } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, updateDoc, doc, arrayUnion, arrayRemove, increment, getDoc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { useAuth } from '../App';
 import { motion, AnimatePresence } from 'motion/react';
@@ -73,6 +73,30 @@ const THEMES = [
     font: 'font-sans', 
     icon: '🖋️' 
   },
+  { 
+    id: 'midnight', 
+    name: 'Midnight', 
+    bg: 'bg-slate-900', 
+    pattern: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.1) 1px, transparent 0)',
+    border: 'border-slate-800', 
+    accent: 'bg-slate-800',
+    text: 'text-slate-100', 
+    font: 'font-serif', 
+    icon: '🌙',
+    premium: true
+  },
+  { 
+    id: 'vintage', 
+    name: 'Vintage', 
+    bg: 'bg-[#f4ecd8]', 
+    pattern: 'url("https://www.transparenttextures.com/patterns/old-paper.png")',
+    border: 'border-[#d4c5a9]', 
+    accent: 'bg-[#e8dec5]',
+    text: 'text-[#5d4037]', 
+    font: 'font-serif', 
+    icon: '📜',
+    premium: true
+  },
 ];
 
 const FONTS = [
@@ -80,9 +104,10 @@ const FONTS = [
   { id: 'font-serif', name: 'Classic', class: 'font-serif' },
   { id: 'font-hand-bn', name: 'Childhood', class: 'font-hand-bn' },
   { id: 'font-bn-neat', name: 'Neat', class: 'font-bn-neat' },
-  { id: 'font-bn-poetry', name: 'Poetry', class: 'font-bn-poetry' },
   { id: 'font-bn-traditional', name: 'Traditional', class: 'font-bn-traditional' },
   { id: 'font-bn-friendly', name: 'Friendly', class: 'font-bn-friendly' },
+  { id: 'font-fancy', name: 'English Script', class: 'font-fancy', premium: true },
+  { id: 'font-bn-poetry', name: 'Poetry', class: 'font-bn-poetry', premium: true },
 ];
 
 export default function Wall() {
@@ -125,6 +150,15 @@ export default function Wall() {
         likedBy: [] // We'll use this for tracking likes locally
       });
       setNewPost({ title: '', content: '', theme: THEMES[0].id, font: FONTS[0].id, password: '' });
+      
+      // Award points to author
+      try {
+        await updateDoc(doc(db, 'users', user.uid), {
+          points: increment(10)
+        });
+      } catch (pointsError) {
+        console.warn("Failed to award points for wall post:", pointsError);
+      }
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'wall_posts');
     } finally {
@@ -142,6 +176,17 @@ export default function Wall() {
         likes: increment(isLiked ? -1 : 1),
         likedBy: isLiked ? arrayRemove(user.uid) : arrayUnion(user.uid)
       });
+
+      if (!isLiked) {
+        // Award points to author
+        const postSnap = await getDoc(postRef);
+        if (postSnap.exists()) {
+          const authorId = postSnap.data().authorId;
+          await updateDoc(doc(db, 'users', authorId), {
+            points: increment(5)
+          });
+        }
+      }
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, `wall_posts/${postId}`);
     }
@@ -205,7 +250,7 @@ export default function Wall() {
               required
             />
             <div className="flex flex-wrap gap-2">
-              {THEMES.map(t => (
+              {THEMES.filter(t => !t.premium || profile?.inventory?.includes(t.id)).map(t => (
                 <button
                   key={t.id}
                   type="button"
@@ -217,7 +262,7 @@ export default function Wall() {
               ))}
             </div>
             <div className="flex flex-wrap gap-2">
-              {FONTS.map(f => (
+              {FONTS.filter(f => !f.premium || profile?.inventory?.includes(f.id)).map(f => (
                 <button
                   key={f.id}
                   type="button"

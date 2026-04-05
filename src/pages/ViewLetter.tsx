@@ -62,6 +62,24 @@ const THEMES: Record<string, any> = {
     font: 'font-sans', 
     icon: '🖋️' 
   },
+  midnight: { 
+    bg: 'bg-slate-950', 
+    pattern: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.15) 1px, transparent 0)',
+    border: 'border-slate-800', 
+    accent: 'bg-slate-900',
+    text: 'text-slate-100', 
+    font: 'font-serif', 
+    icon: '🌙' 
+  },
+  vintage: { 
+    bg: 'bg-[#f4ecd8]', 
+    pattern: 'url("https://www.transparenttextures.com/patterns/old-mathematics.png")',
+    border: 'border-[#d4c5a1]', 
+    accent: 'bg-[#e4dcc4]',
+    text: 'text-[#5d4037]', 
+    font: 'font-serif', 
+    icon: '📜' 
+  },
 };
 
 export default function ViewLetter() {
@@ -72,6 +90,7 @@ export default function ViewLetter() {
   const [sender, setSender] = useState<any>(null);
   const [albums, setAlbums] = useState<any[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [isOpening, setIsOpening] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [isLocked, setIsLocked] = useState(false);
   const [error, setError] = useState('');
@@ -127,6 +146,15 @@ export default function ViewLetter() {
     }
   };
 
+  const handleOpen = () => {
+    if (isLocked) return;
+    setIsOpening(true);
+    setTimeout(() => {
+      setIsOpen(true);
+      setIsOpening(false);
+    }, 1500);
+  };
+
   const handleMoveToAlbum = async (albumId: string | null) => {
     if (!letterId) return;
     try {
@@ -165,7 +193,7 @@ export default function ViewLetter() {
   const fontClass = letter.font || 'font-serif';
 
   return (
-    <div className="min-h-screen bg-paper p-4 py-10 flex flex-col items-center">
+    <div className="min-h-screen bg-paper p-4 py-10 flex flex-col items-center overflow-x-hidden">
       <div className="w-full max-w-2xl flex justify-between items-center mb-8">
         <button 
           onClick={() => navigate(-1)}
@@ -225,38 +253,68 @@ export default function ViewLetter() {
 
       <AnimatePresence mode="wait">
         {!isOpen ? (
-          <motion.div
-            key="envelope"
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 1.1, opacity: 0, y: -50 }}
-            onClick={() => !isLocked && setIsOpen(true)}
-            className={`w-full max-w-md aspect-[4/3] bg-white shadow-2xl rounded-lg border-2 border-black/5 relative cursor-pointer overflow-hidden flex items-center justify-center group`}
-          >
-            {/* Envelope Flap */}
-            <div className="absolute top-0 left-0 w-full h-1/2 bg-black/5 origin-top transition-transform group-hover:scale-y-110" style={{ clipPath: 'polygon(0 0, 100% 0, 50% 100%)' }} />
-            
-            <div className="text-center z-10">
-              <Mail size={64} className="text-accent/20 mx-auto mb-4" />
-              <h3 className="text-xl font-serif italic text-ink/60">চিঠিটি খুলুন</h3>
-            </div>
-
-            {isLocked && (
-              <div className="absolute inset-0 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center p-8 z-20">
-                <Lock size={40} className="text-accent mb-4" />
-                <h3 className="text-lg mb-4">এই চিঠিটি পাসওয়ার্ড দ্বারা সুরক্ষিত</h3>
-                <input
-                  type="password"
-                  value={passwordInput}
-                  onChange={e => setPasswordInput(e.target.value)}
-                  placeholder="পাসওয়ার্ড দিন..."
-                  className="input-field mb-4 text-center"
-                />
-                {error && <p className="text-red-500 text-xs mb-4">{error}</p>}
-                <button onClick={handleUnlock} className="btn-primary w-full">আনলক করুন</button>
+          <div className="relative w-full max-w-md perspective-1000">
+            <motion.div
+              key="envelope"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 1.1, opacity: 0, y: -100 }}
+              onClick={handleOpen}
+              className={`w-full aspect-[4/3] bg-[#fdfcf0] shadow-2xl rounded-lg border-2 border-black/5 relative cursor-pointer flex items-center justify-center group overflow-visible`}
+            >
+              {/* Envelope Body */}
+              <div className="absolute inset-0 bg-[#fdfcf0] rounded-lg z-10 shadow-inner" style={{ clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' }}>
+                <div className="absolute inset-0 border-t-[100px] border-t-transparent border-l-[200px] border-l-black/5 border-r-[200px] border-r-black/5 border-b-[150px] border-b-black/10 pointer-events-none" />
               </div>
-            )}
-          </motion.div>
+
+              {/* Envelope Flap */}
+              <motion.div 
+                className="absolute top-0 left-0 w-full h-1/2 bg-[#fdfcf0] origin-top z-30 shadow-md"
+                style={{ clipPath: 'polygon(0 0, 100% 0, 50% 100%)' }}
+                animate={{ rotateX: isOpening ? -180 : 0 }}
+                transition={{ duration: 0.8, ease: 'easeInOut' }}
+              />
+
+              {/* Paper Sliding Out */}
+              <motion.div
+                className={`absolute w-[90%] h-[80%] ${theme.bg} shadow-lg z-20 p-6 flex flex-col`}
+                initial={{ y: 0 }}
+                animate={{ y: isOpening ? -150 : 0, opacity: isOpening ? 1 : 0.5 }}
+                transition={{ delay: 0.8, duration: 0.7, ease: 'easeOut' }}
+              >
+                <div className="w-full h-4 bg-black/5 mb-4 rounded" />
+                <div className="w-3/4 h-4 bg-black/5 mb-4 rounded" />
+                <div className="w-full h-4 bg-black/5 mb-4 rounded" />
+              </motion.div>
+              
+              <div className="text-center z-40">
+                <Mail size={64} className="text-accent/20 mx-auto mb-4" />
+                <h3 className="text-xl font-serif italic text-ink/60">চিঠিটি খুলুন</h3>
+              </div>
+
+              {isLocked && (
+                <div className="absolute inset-0 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center p-8 z-50 rounded-lg">
+                  <Lock size={40} className="text-accent mb-4" />
+                  <h3 className="text-lg mb-4">এই চিঠিটি পাসওয়ার্ড দ্বারা সুরক্ষিত</h3>
+                  <input
+                    type="password"
+                    value={passwordInput}
+                    onChange={e => setPasswordInput(e.target.value)}
+                    placeholder="পাসওয়ার্ড দিন..."
+                    className="input-field mb-4 text-center"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  {error && <p className="text-red-500 text-xs mb-4">{error}</p>}
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); handleUnlock(); }} 
+                    className="btn-primary w-full"
+                  >
+                    আনলক করুন
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          </div>
         ) : (
           <motion.div
             key="letter"

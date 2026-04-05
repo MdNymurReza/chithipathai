@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, addDoc, collection, serverTimestamp, Timestamp, query, where, getCountFromServer } from 'firebase/firestore';
+import { doc, getDoc, addDoc, collection, serverTimestamp, Timestamp, query, where, getCountFromServer, updateDoc, increment } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType } from '../firebase';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronLeft, ChevronRight, Send, Sticker, Type, Palette, Clock, Lock, User, Smile, StickyNote, Stamp as StampIcon, Sparkles } from 'lucide-react';
@@ -79,10 +79,40 @@ const THEMES = [
     icon: '🖋️',
     effect: 'shadow-[0_0_20px_rgba(0,0,0,0.05)]'
   },
+  { 
+    id: 'midnight', 
+    name: 'Midnight', 
+    bg: 'bg-slate-900', 
+    pattern: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.1) 1px, transparent 0)',
+    border: 'border-slate-800', 
+    accent: 'bg-slate-800',
+    text: 'text-slate-100', 
+    font: 'font-serif', 
+    icon: '🌙',
+    effect: 'shadow-[0_0_30px_rgba(15,23,42,0.5)]',
+    premium: true
+  },
+  { 
+    id: 'vintage', 
+    name: 'Vintage', 
+    bg: 'bg-[#f4ecd8]', 
+    pattern: 'url("https://www.transparenttextures.com/patterns/old-paper.png")',
+    border: 'border-[#d4c5a9]', 
+    accent: 'bg-[#e8dec5]',
+    text: 'text-[#5d4037]', 
+    font: 'font-serif', 
+    icon: '📜',
+    effect: 'shadow-[0_0_30px_rgba(93,64,55,0.1)]',
+    premium: true
+  },
 ];
 
 const STICKERS = {
   emoji: ['❤️', '✨', '🌸', '💌', '🌙', '🦋', '🧸', '🎈', '🍰', '☕'],
+  premium: [
+    { id: 'sticker-crown', value: '👑' },
+    { id: 'sticker-diamond', value: '💎' }
+  ],
   stamp: ['STAMP_1', 'STAMP_2', 'STAMP_3'], // Placeholder for stamp styles
   memo: ['Note...']
 };
@@ -92,10 +122,10 @@ const FONTS = [
   { id: 'font-serif', name: 'Classic', class: 'font-serif' },
   { id: 'font-hand-bn', name: 'Childhood', class: 'font-hand-bn' },
   { id: 'font-bn-neat', name: 'Neat', class: 'font-bn-neat' },
-  { id: 'font-bn-poetry', name: 'Poetry', class: 'font-bn-poetry' },
   { id: 'font-bn-traditional', name: 'Traditional', class: 'font-bn-traditional' },
   { id: 'font-bn-friendly', name: 'Friendly', class: 'font-bn-friendly' },
-  { id: 'font-fancy', name: 'English Script', class: 'font-fancy' },
+  { id: 'font-fancy', name: 'English Script', class: 'font-fancy', premium: true },
+  { id: 'font-bn-poetry', name: 'Poetry', class: 'font-bn-poetry', premium: true },
 ];
 
 export default function Write() {
@@ -244,6 +274,15 @@ export default function Write() {
       console.log("Sending letter data:", letterData);
       await addDoc(collection(db, 'letters'), letterData);
       
+      // Award points to sender
+      try {
+        await updateDoc(doc(db, 'users', user.uid), {
+          points: increment(10)
+        });
+      } catch (pointsError) {
+        console.warn("Failed to award points:", pointsError);
+      }
+
       // Create notification
       try {
         await addDoc(collection(db, 'notifications'), {
@@ -325,7 +364,7 @@ export default function Write() {
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} key="step2">
               <h2 className="text-3xl mb-8 text-center">থিম পছন্দ করুন</h2>
               <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-                {THEMES.map(t => (
+                {THEMES.filter(t => !t.premium || useAuth().profile?.inventory?.includes(t.id)).map(t => (
                   <button
                     key={t.id}
                     onClick={() => setTheme(t)}
@@ -356,7 +395,7 @@ export default function Write() {
               
               {/* Font Picker */}
               <div className="flex flex-wrap justify-center gap-2 mb-6">
-                {FONTS.map(f => (
+                {FONTS.filter(f => !f.premium || useAuth().profile?.inventory?.includes(f.id)).map(f => (
                   <button
                     key={f.id}
                     onClick={() => setFont(f)}
@@ -465,6 +504,9 @@ export default function Write() {
                     <div className="grid grid-cols-5 gap-2">
                       {STICKERS.emoji.map(e => (
                         <button key={e} onClick={() => addSticker('emoji', e)} className="text-2xl hover:scale-125 transition-transform">{e}</button>
+                      ))}
+                      {STICKERS.premium.filter(s => useAuth().profile?.inventory?.includes(s.id)).map(s => (
+                        <button key={s.id} onClick={() => addSticker('emoji', s.value)} className="text-2xl hover:scale-125 transition-transform">{s.value}</button>
                       ))}
                     </div>
                   </div>

@@ -9,10 +9,12 @@
         "username": { "type": "string", "description": "Unique username" },
         "email": { "type": "string", "format": "email", "description": "User email" },
         "phone": { "type": "string", "description": "Unique phone number" },
+        "points": { "type": "number", "description": "Chithi Points earned by the user" },
+        "inventory": { "type": "array", "items": { "type": "string" }, "description": "List of purchased item IDs" },
         "createdAt": { "type": "string", "format": "date-time", "description": "Account creation time" },
         "blockedUsers": { "type": "array", "items": { "type": "string" }, "description": "List of blocked user IDs" }
       },
-      "required": ["fullName", "username", "email", "phone", "createdAt"]
+      "required": ["fullName", "username", "email", "phone", "createdAt", "points"]
     },
     "Letter": {
       "title": "Letter",
@@ -23,7 +25,7 @@
         "receiverId": { "type": "string", "description": "ID of the receiver" },
         "title": { "type": "string", "description": "Title of the letter" },
         "content": { "type": "string", "description": "Content of the letter" },
-        "theme": { "type": "string", "enum": ["romantic", "sad", "funny", "birthday", "islamic", "professional"], "description": "Theme of the letter" },
+        "theme": { "type": "string", "enum": ["romantic", "sad", "funny", "birthday", "islamic", "professional", "midnight", "vintage"], "description": "Theme of the letter" },
         "font": { "type": "string", "description": "Font family used for the letter" },
         "isAnonymous": { "type": "boolean", "description": "Whether the sender is anonymous" },
         "noReply": { "type": "boolean", "description": "Whether a reply is needed" },
@@ -63,7 +65,7 @@
         "authorName": { "type": "string", "description": "Display name of the author" },
         "title": { "type": "string", "description": "Title of the post" },
         "content": { "type": "string", "description": "Content of the post" },
-        "theme": { "type": "string", "enum": ["romantic", "sad", "funny", "birthday", "islamic", "professional"], "description": "Theme of the post" },
+        "theme": { "type": "string", "enum": ["romantic", "sad", "funny", "birthday", "islamic", "professional", "midnight", "vintage"], "description": "Theme of the post" },
         "font": { "type": "string", "description": "Font family used for the post" },
         "password": { "type": "string", "description": "Optional password protection" },
         "createdAt": { "type": "string", "format": "date-time", "description": "Creation time" },

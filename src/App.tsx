@@ -14,6 +14,7 @@ import ViewWallPost from './pages/ViewWallPost';
 import Profile from './pages/Profile';
 import Search from './pages/Search';
 import Wall from './pages/Wall';
+import Shop from './pages/Shop';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
 import Contact from './pages/Contact';
@@ -98,6 +99,7 @@ export default function App() {
                 <Route path="/profile" element={user ? <Profile /> : <Navigate to="/auth" />} />
                 <Route path="/search" element={user ? <Search /> : <Navigate to="/auth" />} />
                 <Route path="/wall" element={<Wall />} />
+                <Route path="/shop" element={user ? <Shop /> : <Navigate to="/auth" />} />
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/contact" element={<Contact />} />

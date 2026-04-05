@@ -76,6 +76,8 @@ export default function Auth() {
           username: data.username.toLowerCase(),
           email: data.email,
           phone: data.phone,
+          points: 0,
+          inventory: [],
           createdAt: serverTimestamp(),
           blockedUsers: [],
         });
@@ -186,7 +188,7 @@ export default function Auth() {
                 </div>
               </div>
             )}
-{/* 
+
             {isLogin && (
               <button
                 type="button"
@@ -210,7 +212,7 @@ export default function Auth() {
               >
                 টেস্ট লগইন (Test Login)
               </button>
-            )} */}
+            )}
           </motion.form>
         </AnimatePresence>
 

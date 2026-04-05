@@ -19,7 +19,7 @@ service cloud.firestore {
     // Fields: userId, text, read, createdAt
     //
     // Collection: wall_posts
-    // Fields: authorId, authorName, title, content, theme, createdAt, likes
+    // Fields: authorId, authorName, title, content, theme, font, password, createdAt, likes, likedBy
     //
     // ===============================================================
 
@@ -55,11 +55,13 @@ service cloud.firestore {
     // ===============================================================
 
     function isValidUser(data) {
-      return hasOnlyAllowedFields(data, ['fullName', 'username', 'email', 'phone', 'createdAt', 'blockedUsers', 'role']) &&
+      return hasOnlyAllowedFields(data, ['fullName', 'username', 'email', 'phone', 'createdAt', 'blockedUsers', 'role', 'points', 'inventory']) &&
              data.fullName is string && data.fullName.size() > 0 && data.fullName.size() < 100 &&
              data.username is string && data.username.size() >= 3 && data.username.size() < 30 &&
              data.email is string && isValidEmail(data.email) &&
-             data.phone is string && data.phone.size() >= 10 && data.phone.size() < 20;
+             data.phone is string && data.phone.size() >= 10 && data.phone.size() < 20 &&
+             data.points is number &&
+             (data.get('inventory', null) == null || data.inventory is list);
     }
 
     function isValidProfile(data) {
@@ -74,28 +76,45 @@ service cloud.firestore {
     }
 
     function isValidLetter(data) {
-      return hasOnlyAllowedFields(data, ['senderId', 'receiverId', 'title', 'content', 'theme', 'isAnonymous', 'noReply', 'password', 'scheduledAt', 'createdAt', 'stickers']) &&
+      return hasOnlyAllowedFields(data, ['senderId', 'receiverId', 'title', 'content', 'theme', 'font', 'isAnonymous', 'noReply', 'password', 'scheduledAt', 'createdAt', 'stickers', 'albumId', 'scratchConfig', 'read']) &&
              data.senderId == request.auth.uid &&
              data.receiverId is string &&
              data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
              data.content is string && data.content.size() > 0 && data.content.size() < 10000 &&
-             data.theme in ['romantic', 'sad', 'funny', 'birthday', 'islamic'] &&
+             data.theme in ['romantic', 'sad', 'funny', 'birthday', 'islamic', 'professional', 'midnight', 'vintage'] &&
+             (data.get('font', null) == null || data.font is string) &&
              data.isAnonymous is bool &&
              data.noReply is bool &&
-             (data.password == null || data.password is string) &&
-             (data.scheduledAt == null || data.scheduledAt is timestamp) &&
+             (data.get('password', null) == null || data.password is string) &&
+             (data.get('scheduledAt', null) == null || data.scheduledAt is timestamp) &&
              data.createdAt == request.time &&
              data.stickers is list &&
+             (data.get('albumId', null) == null || data.albumId is string) &&
+             (data.get('scratchConfig', null) == null || (
+               data.scratchConfig is map &&
+               data.scratchConfig.enabled is bool &&
+               (data.get(['scratchConfig', 'secret'], null) == null || data.scratchConfig.secret is string)
+             )) &&
+             (data.get('read', null) == null || data.read is bool) &&
              isNotBlocked(data.receiverId);
     }
 
+    function isValidAlbum(data) {
+      return hasOnlyAllowedFields(data, ['userId', 'name', 'createdAt']) &&
+             data.userId == request.auth.uid &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.createdAt == request.time;
+    }
+
     function isValidWallPost(data) {
-      return hasOnlyAllowedFields(data, ['authorId', 'authorName', 'title', 'content', 'theme', 'createdAt', 'likes', 'likedBy']) &&
+      return hasOnlyAllowedFields(data, ['authorId', 'authorName', 'title', 'content', 'theme', 'font', 'password', 'createdAt', 'likes', 'likedBy']) &&
              data.authorId == request.auth.uid &&
              data.authorName is string &&
              data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
              data.content is string && data.content.size() > 0 && data.content.size() < 10000 &&
-             data.theme in ['romantic', 'sad', 'funny', 'birthday', 'islamic'] &&
+             data.theme in ['romantic', 'sad', 'funny', 'birthday', 'islamic', 'professional', 'midnight', 'vintage'] &&
+             (data.get('font', null) == null || data.font is string) &&
+             (data.get('password', null) == null || data.password is string) &&
              data.createdAt == request.time &&
              data.likes is number &&
              data.likedBy is list;
@@ -123,15 +142,25 @@ service cloud.firestore {
         isAdmin()
       );
       allow create: if isAuthenticated() && isValidLetter(request.resource.data);
-      allow update: if false; // Letters are immutable
+      allow update: if isAuthenticated() && (
+        (request.auth.uid == resource.data.receiverId && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['albumId', 'read'])) ||
+        isAdmin()
+      );
       allow delete: if isAuthenticated() && (request.auth.uid == resource.data.senderId || isAdmin());
+    }
+
+    match /albums/{albumId} {
+      allow read: if isAuthenticated() && (request.auth.uid == resource.data.userId || isAdmin());
+      allow create: if isAuthenticated() && isValidAlbum(request.resource.data);
+      allow update: if isAuthenticated() && request.auth.uid == resource.data.userId && isValidAlbum(request.resource.data);
+      allow delete: if isAuthenticated() && (request.auth.uid == resource.data.userId || isAdmin());
     }
 
     match /wall_posts/{postId} {
       allow read: if true;
       allow create: if isAuthenticated() && isValidWallPost(request.resource.data);
-      allow update: if isAuthenticated() && (
-        (isOwner(resource.data.authorId) && isValidWallPost(request.resource.data)) ||
+      allow update: if isAuthenticated() && isValidWallPost(request.resource.data) && (
+        isOwner(resource.data.authorId) ||
         (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'likedBy']))
       );
       allow delete: if isAuthenticated() && (isOwner(resource.data.authorId) || isAdmin());

@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../App';
-import { Mail, Send, Search, User, LogOut, Bell, Menu, X, MessageSquare } from 'lucide-react';
+import { Mail, Send, Search, User, LogOut, Bell, Menu, X, MessageSquare, ShoppingBag, Coins } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 
 export default function Navbar() {
-  const { user, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [unreadLettersCount, setUnreadLettersCount] = useState(0);
@@ -41,7 +41,8 @@ export default function Navbar() {
   const navLinks = [
     { to: '/inbox', label: 'ইনবক্স', icon: Mail },
     { to: '/sent', label: 'পাঠানো', icon: Send },
-    { to: '/wall', label: 'পাবলিক ওয়াল', icon: MessageSquare },
+    { to: '/wall', label: 'ওয়াল', icon: MessageSquare },
+    { to: '/shop', label: 'শপ', icon: ShoppingBag },
     { to: '/search', label: 'খুঁজুন', icon: Search },
     { to: '/profile', label: 'প্রোফাইল', icon: User },
   ];
@@ -54,12 +55,22 @@ export default function Navbar() {
         <div className="flex justify-between h-16 items-center">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            {/* <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center text-white font-serif font-bold text-xl">
-            </div> */}
-            <span className="font-poppins font-bold text-xl tracking-tight hidden sm:block">
-              ChithiPathai
+            <img 
+              src="/logo.png" 
+              alt="ChithiPathao Logo" 
+              className="w-10 h-10 object-contain"
+              referrerPolicy="no-referrer"
+            />
+            <span className="font-serif font-bold text-xl tracking-tight hidden sm:block">
+              ChithiPathao
             </span>
           </Link>
+
+          {/* Points Display (Desktop) */}
+          <div className="hidden md:flex items-center gap-2 px-4 py-1.5 bg-accent/5 rounded-full border border-accent/10 mr-4">
+            <Coins size={16} className="text-accent" />
+            <span className="text-sm font-bold text-accent">{profile?.points || 0}</span>
+          </div>
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-1">
@@ -98,6 +109,10 @@ export default function Navbar() {
 
           {/* Mobile Menu Toggle */}
           <div className="md:hidden flex items-center gap-4">
+            <div className="flex items-center gap-1 px-3 py-1 bg-accent/5 rounded-full border border-accent/10">
+              <Coins size={14} className="text-accent" />
+              <span className="text-xs font-bold text-accent">{profile?.points || 0}</span>
+            </div>
             {unreadLettersCount > 0 && (
               <div className="relative">
                 <Bell size={20} className="text-accent" />
